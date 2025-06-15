@@ -119,8 +119,8 @@
       "properties": {
         "thinkube-cicd.apiUrl": {
           "type": "string",
-          "default": "https://cicd-monitor.thinkube.com",
-          "description": "CI/CD Monitor API server URL"
+          "default": "https://control.thinkube.com",
+          "description": "Thinkube Control Hub API URL"
         },
         "thinkube-cicd.defaultApp": {
           "type": "string",

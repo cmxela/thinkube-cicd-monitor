@@ -5,19 +5,32 @@ import { PipelineTimelinePanel } from './views/PipelineTimelinePanel';
 import { K8sClient } from './api/K8sClient';
 import { PipelineMonitor } from './api/PipelineMonitor';
 import { EventStream } from './api/EventStream';
+import { ControlHubAPI } from './api/ControlHubAPI';
 
 let pipelineMonitor: PipelineMonitor;
 let eventStream: EventStream | undefined;
+let controlHubAPI: ControlHubAPI | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Thinkube CI/CD Monitor is now active!');
 
     // First, register the configure command - this should always work
-    context.subscriptions.push(
-        vscode.commands.registerCommand('thinkube-cicd.configure', async () => {
-            await configureExtension();
-        })
-    );
+    const configureCommand = vscode.commands.registerCommand('thinkube-cicd.configure', async () => {
+        console.log('Configure command triggered');
+        vscode.window.showInformationMessage('Configure command clicked!');
+        await configureExtension();
+    });
+    
+    context.subscriptions.push(configureCommand);
+    
+    // Verify command was registered
+    vscode.commands.getCommands().then(commands => {
+        if (commands.includes('thinkube-cicd.configure')) {
+            console.log('Configure command successfully registered');
+        } else {
+            console.error('Configure command NOT registered!');
+        }
+    });
 
     let k8sClient: K8sClient | undefined;
     let pipelineProvider: PipelineTreeProvider | undefined;

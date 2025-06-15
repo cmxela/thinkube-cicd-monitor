@@ -111,21 +111,23 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
-    // Set up auto-refresh
-    const refreshInterval = vscode.workspace.getConfiguration('thinkube-cicd').get('refreshInterval', 5000);
-    const refreshTimer = setInterval(() => {
-        if (pipelineProvider.isVisible()) {
-            pipelineProvider.refresh();
-            eventsProvider.refresh();
-        }
-    }, refreshInterval);
+    // Set up auto-refresh if components initialized successfully
+    if (pipelineProvider && eventsProvider) {
+        const refreshInterval = vscode.workspace.getConfiguration('thinkube-cicd').get('refreshInterval', 5000);
+        const refreshTimer = setInterval(() => {
+            if (pipelineProvider.isVisible()) {
+                pipelineProvider.refresh();
+                eventsProvider.refresh();
+            }
+        }, refreshInterval);
 
-    context.subscriptions.push({
-        dispose: () => clearInterval(refreshTimer)
-    });
+        context.subscriptions.push({
+            dispose: () => clearInterval(refreshTimer)
+        });
 
-    // Set up WebSocket connection for real-time updates
-    setupWebSocket(context, pipelineProvider, eventsProvider);
+        // Set up WebSocket connection for real-time updates
+        setupWebSocket(context, pipelineProvider, eventsProvider);
+    }
 
     // Show welcome message
     const showNotifications = vscode.workspace.getConfiguration('thinkube-cicd').get('showNotifications', true);

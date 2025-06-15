@@ -156,12 +156,15 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "package": "vsce package",
-    "test": "node ./dist/test/runTest.js"
+    "test": "node ./dist/test/runTest.js",
+    "publish:ovsx": "ovsx publish",
+    "prepublish:ovsx": "npm run compile && npm run package"
   },
   "devDependencies": {
     "@types/vscode": "^1.100.0",
     "@types/node": "^24.0.0",
     "@vscode/vsce": "^2.22.0",
+    "ovsx": "^0.8.3",
     "typescript": "^5.8.3"
   },
   "dependencies": {

@@ -23,6 +23,12 @@ Real-time CI/CD pipeline monitoring extension for code-server within the Thinkub
 
 ## Installation
 
+### From Open VSX Registry
+```bash
+# Once published to Open VSX
+code-server --install-extension thinkube.thinkube-cicd-monitor
+```
+
 ### From VSIX File
 ```bash
 code-server --install-extension thinkube-cicd-monitor-1.0.0.vsix

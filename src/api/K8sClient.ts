@@ -13,21 +13,26 @@ export class K8sClient {
         const kubeconfigPath = vscode.workspace.getConfiguration('thinkube-cicd').get<string>('kubeconfig');
         
         try {
-            if (kubeconfigPath) {
+            if (kubeconfigPath && kubeconfigPath.trim()) {
+                console.log('Loading kubeconfig from:', kubeconfigPath);
                 this.kc.loadFromFile(kubeconfigPath);
             } else if (process.env.KUBERNETES_SERVICE_HOST) {
                 // In-cluster config
+                console.log('Using in-cluster Kubernetes configuration');
                 this.kc.loadFromCluster();
             } else {
                 // Default config
+                console.log('Loading default kubeconfig');
                 this.kc.loadFromDefault();
             }
             
             this.coreApi = this.kc.makeApiClient(k8s.CoreV1Api);
             this.appsApi = this.kc.makeApiClient(k8s.AppsV1Api);
+            console.log('Kubernetes client initialized successfully');
         } catch (error) {
             console.error('Failed to initialize Kubernetes client:', error);
-            vscode.window.showErrorMessage('Failed to connect to Kubernetes cluster. Please check your kubeconfig.');
+            // Don't show error immediately - might be a configuration issue
+            // User can use Configure command to fix it
         }
     }
 

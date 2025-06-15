@@ -3,7 +3,7 @@ import { Pipeline, PipelineEvent, PipelineStatus, EventStatus, PipelineMetrics, 
 
 export class PipelineMonitor {
     private k8sClient: K8sClient;
-    private namespace = 'cicd-monitor';
+    private namespace = 'thinkube-control';
     private pipelineCache: Map<string, Pipeline> = new Map();
 
     constructor(k8sClient: K8sClient) {

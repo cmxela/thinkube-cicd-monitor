@@ -3,8 +3,8 @@ import * as vscode from 'vscode';
 
 export class K8sClient {
     private kc: k8s.KubeConfig;
-    private coreApi: k8s.CoreV1Api;
-    private appsApi: k8s.AppsV1Api;
+    private coreApi!: k8s.CoreV1Api;
+    private appsApi!: k8s.AppsV1Api;
 
     constructor() {
         this.kc = new k8s.KubeConfig();

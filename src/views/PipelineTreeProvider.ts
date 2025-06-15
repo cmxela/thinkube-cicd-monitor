@@ -31,7 +31,7 @@ export class PipelineTreeProvider implements vscode.TreeDataProvider<PipelineIte
         return element;
     }
 
-    getChildren(element?: PipelineItem): Thenable<PipelineItem[]> {
+    getChildren(element?: PipelineItem): Thenable<vscode.TreeItem[]> {
         if (!element) {
             // Root level - show pipelines
             return Promise.resolve(
@@ -142,12 +142,10 @@ export class PipelineItem extends vscode.TreeItem {
         if (trigger.user) triggerInfo += ` by ${trigger.user}`;
         if (trigger.branch) triggerInfo += ` on ${trigger.branch}`;
         
-        return new vscode.MarkdownString(
-            `**${this.pipeline.appName}**\n\n` +
-            `Status: ${this.pipeline.status}\n\n` +
-            `${triggerInfo}\n\n` +
-            `Started: ${new Date(this.pipeline.startTime * 1000).toLocaleString()}`
-        );
+        return `${this.pipeline.appName}\n` +
+            `Status: ${this.pipeline.status}\n` +
+            `${triggerInfo}\n` +
+            `Started: ${new Date(this.pipeline.startTime * 1000).toLocaleString()}`;
     }
 
     private getIcon(): vscode.ThemeIcon {

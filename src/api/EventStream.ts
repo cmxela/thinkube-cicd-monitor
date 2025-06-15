@@ -3,7 +3,7 @@ import { EventEmitter } from 'events';
 import * as vscode from 'vscode';
 
 export class EventStream extends EventEmitter {
-    private ws: WebSocket | null = null;
+    private ws: WebSocket.WebSocket | null = null;
     private apiUrl: string;
     private reconnectTimeout: NodeJS.Timeout | null = null;
     private reconnectAttempts = 0;
@@ -19,15 +19,15 @@ export class EventStream extends EventEmitter {
         const wsUrl = this.apiUrl.replace(/^http/, 'ws') + '/ws/pipelines/all';
         
         try {
-            this.ws = new WebSocket(wsUrl);
+            this.ws = new WebSocket.WebSocket(wsUrl);
             
-            this.ws.on('open', () => {
+            this.ws!.on('open', () => {
                 console.log('WebSocket connected to CI/CD monitor');
                 this.reconnectAttempts = 0;
                 this.emit('connected');
             });
             
-            this.ws.on('message', (data) => {
+            this.ws!.on('message', (data) => {
                 try {
                     const event = JSON.parse(data.toString());
                     this.emit('pipeline-event', event);
@@ -36,13 +36,13 @@ export class EventStream extends EventEmitter {
                 }
             });
             
-            this.ws.on('close', (code, reason) => {
+            this.ws!.on('close', (code, reason) => {
                 console.log(`WebSocket closed: ${code} - ${reason}`);
                 this.emit('disconnected');
                 this.scheduleReconnect();
             });
             
-            this.ws.on('error', (error) => {
+            this.ws!.on('error', (error) => {
                 console.error('WebSocket error:', error);
                 this.emit('error', error);
             });

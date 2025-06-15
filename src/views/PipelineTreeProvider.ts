@@ -3,9 +3,11 @@ import * as path from 'path';
 import { Pipeline, PipelineStatus, EventType } from '../models/Pipeline';
 import { PipelineMonitor } from '../api/PipelineMonitor';
 
-export class PipelineTreeProvider implements vscode.TreeDataProvider<PipelineItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<PipelineItem | undefined | null | void> = new vscode.EventEmitter<PipelineItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<PipelineItem | undefined | null | void> = this._onDidChangeTreeData.event;
+type TreeNode = PipelineItem | StageItem;
+
+export class PipelineTreeProvider implements vscode.TreeDataProvider<TreeNode> {
+    private _onDidChangeTreeData: vscode.EventEmitter<TreeNode | undefined | null | void> = new vscode.EventEmitter<TreeNode | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<TreeNode | undefined | null | void> = this._onDidChangeTreeData.event;
 
     private pipelines: Pipeline[] = [];
     private visible = false;
@@ -27,19 +29,22 @@ export class PipelineTreeProvider implements vscode.TreeDataProvider<PipelineIte
         this.visible = visible;
     }
 
-    getTreeItem(element: PipelineItem): vscode.TreeItem {
+    getTreeItem(element: TreeNode): vscode.TreeItem {
         return element;
     }
 
-    getChildren(element?: PipelineItem): Thenable<vscode.TreeItem[]> {
+    getChildren(element?: TreeNode): Thenable<TreeNode[]> {
         if (!element) {
             // Root level - show pipelines
             return Promise.resolve(
                 this.pipelines.map(pipeline => new PipelineItem(pipeline))
             );
-        } else {
+        } else if (element instanceof PipelineItem) {
             // Show pipeline stages
             return Promise.resolve(this.getStages(element.pipeline));
+        } else {
+            // StageItem has no children
+            return Promise.resolve([]);
         }
     }
 
@@ -52,8 +57,8 @@ export class PipelineTreeProvider implements vscode.TreeDataProvider<PipelineIte
         }
     }
 
-    private getStages(pipeline: Pipeline): PipelineItem[] {
-        const stages: PipelineItem[] = [];
+    private getStages(pipeline: Pipeline): StageItem[] {
+        const stages: StageItem[] = [];
         const stageGroups = new Map<string, Pipeline['events']>();
 
         // Group events by stage

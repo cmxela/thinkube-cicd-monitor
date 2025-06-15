@@ -12,25 +12,45 @@ let eventStream: EventStream | undefined;
 export function activate(context: vscode.ExtensionContext) {
     console.log('Thinkube CI/CD Monitor is now active!');
 
-    // Initialize Kubernetes client
-    const k8sClient = new K8sClient();
-    
-    // Initialize pipeline monitor
-    pipelineMonitor = new PipelineMonitor(k8sClient);
+    // First, register the configure command - this should always work
+    context.subscriptions.push(
+        vscode.commands.registerCommand('thinkube-cicd.configure', async () => {
+            await configureExtension();
+        })
+    );
 
-    // Create tree data providers
-    const pipelineProvider = new PipelineTreeProvider(pipelineMonitor);
-    const eventsProvider = new EventsTreeProvider(pipelineMonitor);
+    let k8sClient: K8sClient | undefined;
+    let pipelineProvider: PipelineTreeProvider | undefined;
+    let eventsProvider: EventsTreeProvider | undefined;
 
-    // Register tree data providers
-    vscode.window.registerTreeDataProvider('thinkube-cicd.pipelines', pipelineProvider);
-    vscode.window.registerTreeDataProvider('thinkube-cicd.events', eventsProvider);
+    try {
+        // Initialize Kubernetes client
+        k8sClient = new K8sClient();
+        
+        // Initialize pipeline monitor
+        pipelineMonitor = new PipelineMonitor(k8sClient);
+
+        // Create tree data providers
+        pipelineProvider = new PipelineTreeProvider(pipelineMonitor);
+        eventsProvider = new EventsTreeProvider(pipelineMonitor);
+
+        // Register tree data providers
+        vscode.window.registerTreeDataProvider('thinkube-cicd.pipelines', pipelineProvider);
+        vscode.window.registerTreeDataProvider('thinkube-cicd.events', eventsProvider);
+    } catch (error) {
+        console.error('Failed to initialize CI/CD Monitor:', error);
+        vscode.window.showWarningMessage('CI/CD Monitor: Failed to initialize. Click "Configure Connection" to set up.');
+    }
 
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('thinkube-cicd.refreshPipelines', () => {
-            pipelineProvider.refresh();
-            eventsProvider.refresh();
+            if (pipelineProvider && eventsProvider) {
+                pipelineProvider.refresh();
+                eventsProvider.refresh();
+            } else {
+                vscode.window.showWarningMessage('CI/CD Monitor not fully initialized. Please configure the extension.');
+            }
         })
     );
 
@@ -78,12 +98,6 @@ export function activate(context: vscode.ExtensionContext) {
                 // TODO: Show metrics in webview
                 vscode.window.showInformationMessage(`Metrics for ${selected}: ${JSON.stringify(metrics)}`);
             }
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('thinkube-cicd.configure', async () => {
-            await configureExtension();
         })
     );
 

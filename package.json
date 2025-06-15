@@ -1,0 +1,172 @@
+{
+  "name": "thinkube-cicd-monitor",
+  "displayName": "Thinkube CI/CD Monitor",
+  "description": "Real-time CI/CD pipeline monitoring for Thinkube - Track builds, deployments, and pipeline events directly in VS Code",
+  "version": "1.0.0",
+  "publisher": "thinkube",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": ["Other", "Visualization"],
+  "keywords": ["ci/cd", "pipeline", "monitoring", "thinkube", "kubernetes"],
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thinkube/thinkube-cicd-monitor"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "thinkube-cicd",
+          "title": "Thinkube CI/CD",
+          "icon": "media/pipeline-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "thinkube-cicd": [
+        {
+          "id": "thinkube-cicd.pipelines",
+          "name": "Pipelines",
+          "icon": "media/pipeline-icon.svg",
+          "contextualTitle": "CI/CD Pipelines"
+        },
+        {
+          "id": "thinkube-cicd.events",
+          "name": "Recent Events",
+          "icon": "media/events-icon.svg",
+          "contextualTitle": "Pipeline Events"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "thinkube-cicd.pipelines",
+        "contents": "No pipelines running.\n[Configure Connection](command:thinkube-cicd.configure)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "thinkube-cicd.showPipeline",
+        "title": "Show Pipeline Details",
+        "category": "Thinkube CI/CD"
+      },
+      {
+        "command": "thinkube-cicd.refreshPipelines",
+        "title": "Refresh Pipelines",
+        "category": "Thinkube CI/CD",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "thinkube-cicd.showTimeline",
+        "title": "Show Pipeline Timeline",
+        "category": "Thinkube CI/CD"
+      },
+      {
+        "command": "thinkube-cicd.triggerBuild",
+        "title": "Trigger Build",
+        "category": "Thinkube CI/CD"
+      },
+      {
+        "command": "thinkube-cicd.showMetrics",
+        "title": "Show Pipeline Metrics",
+        "category": "Thinkube CI/CD"
+      },
+      {
+        "command": "thinkube-cicd.configure",
+        "title": "Configure CI/CD Monitor",
+        "category": "Thinkube CI/CD"
+      },
+      {
+        "command": "thinkube-cicd.analyzePipeline",
+        "title": "Analyze Pipeline Performance",
+        "category": "Thinkube CI/CD"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "thinkube-cicd.refreshPipelines",
+          "when": "view == thinkube-cicd.pipelines",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "thinkube-cicd.showPipeline",
+          "when": "view == thinkube-cicd.pipelines && viewItem == pipeline",
+          "group": "inline"
+        },
+        {
+          "command": "thinkube-cicd.showTimeline",
+          "when": "view == thinkube-cicd.pipelines && viewItem == pipeline",
+          "group": "navigation"
+        },
+        {
+          "command": "thinkube-cicd.analyzePipeline",
+          "when": "view == thinkube-cicd.pipelines && viewItem == pipeline",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Thinkube CI/CD Monitor",
+      "properties": {
+        "thinkube-cicd.apiUrl": {
+          "type": "string",
+          "default": "https://cicd-monitor.thinkube.com",
+          "description": "CI/CD Monitor API server URL"
+        },
+        "thinkube-cicd.defaultApp": {
+          "type": "string",
+          "default": "",
+          "description": "Default application to monitor"
+        },
+        "thinkube-cicd.refreshInterval": {
+          "type": "number",
+          "default": 5000,
+          "description": "Refresh interval in milliseconds"
+        },
+        "thinkube-cicd.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications for pipeline events"
+        },
+        "thinkube-cicd.notificationLevel": {
+          "type": "string",
+          "enum": ["all", "failures", "none"],
+          "default": "failures",
+          "description": "Level of notifications to show"
+        },
+        "thinkube-cicd.kubeconfig": {
+          "type": "string",
+          "default": "",
+          "description": "Path to kubeconfig file (leave empty for in-cluster config)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "test": "node ./dist/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.100.0",
+    "@types/node": "^24.0.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^0.20.0",
+    "axios": "^1.6.0",
+    "ws": "^8.16.0"
+  }
+}

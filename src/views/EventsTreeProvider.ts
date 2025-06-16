@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { PipelineEvent, EventType, EventStatus } from '../models/Pipeline';
-import { PipelineMonitor } from '../api/PipelineMonitor';
+import { ControlHubAPI } from '../api/ControlHubAPI';
 
 export class EventsTreeProvider implements vscode.TreeDataProvider<EventItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<EventItem | undefined | null | void> = new vscode.EventEmitter<EventItem | undefined | null | void>();
@@ -9,7 +9,7 @@ export class EventsTreeProvider implements vscode.TreeDataProvider<EventItem> {
     private events: PipelineEvent[] = [];
     private maxEvents = 50;
 
-    constructor(private pipelineMonitor: PipelineMonitor) {
+    constructor(private controlHubAPI: ControlHubAPI) {
         this.refresh();
     }
 
@@ -41,7 +41,7 @@ export class EventsTreeProvider implements vscode.TreeDataProvider<EventItem> {
 
     private async loadRecentEvents() {
         try {
-            const pipelines = await this.pipelineMonitor.getRecentPipelines(10);
+            const pipelines = await this.controlHubAPI.listPipelines(10);
             this.events = [];
             
             // Extract recent events from pipelines

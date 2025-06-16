@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Pipeline, PipelineStatus, EventType } from '../models/Pipeline';
-import { PipelineMonitor } from '../api/PipelineMonitor';
+import { ControlHubAPI } from '../api/ControlHubAPI';
 
 type TreeNode = PipelineItem | StageItem;
 
@@ -12,7 +12,7 @@ export class PipelineTreeProvider implements vscode.TreeDataProvider<TreeNode> {
     private pipelines: Pipeline[] = [];
     private visible = false;
 
-    constructor(private pipelineMonitor: PipelineMonitor) {
+    constructor(private controlHubAPI: ControlHubAPI) {
         this.refresh();
     }
 
@@ -50,7 +50,7 @@ export class PipelineTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     private async loadPipelines() {
         try {
-            this.pipelines = await this.pipelineMonitor.getRecentPipelines(20);
+            this.pipelines = await this.controlHubAPI.listPipelines(20);
         } catch (error) {
             console.error('Failed to load pipelines:', error);
             this.pipelines = [];

@@ -47,7 +47,7 @@
     "viewsWelcome": [
       {
         "view": "thinkube-cicd.pipelines",
-        "contents": "No pipelines running.\n[Configure Connection](command:thinkube-cicd.configure)"
+        "contents": "No pipelines running.\n[Refresh](command:thinkube-cicd.refreshPipelines)"
       }
     ],
     "commands": [
@@ -75,11 +75,6 @@
       {
         "command": "thinkube-cicd.showMetrics",
         "title": "Show Pipeline Metrics",
-        "category": "Thinkube CI/CD"
-      },
-      {
-        "command": "thinkube-cicd.configure",
-        "title": "Configure CI/CD Monitor",
         "category": "Thinkube CI/CD"
       },
       {
@@ -142,11 +137,6 @@
           "enum": ["all", "failures", "none"],
           "default": "failures",
           "description": "Level of notifications to show"
-        },
-        "thinkube-cicd.kubeconfig": {
-          "type": "string",
-          "default": "",
-          "description": "Path to kubeconfig file (leave empty for in-cluster config)"
         }
       }
     }
@@ -168,7 +158,6 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "@kubernetes/client-node": "^0.20.0",
     "axios": "^1.6.0",
     "ws": "^8.16.0"
   }

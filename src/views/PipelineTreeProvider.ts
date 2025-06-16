@@ -50,7 +50,7 @@ export class PipelineTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     private async loadPipelines() {
         try {
-            this.pipelines = await this.controlHubAPI.listPipelines(20);
+            this.pipelines = await this.controlHubAPI.listPipelines(undefined, undefined, 20);
         } catch (error) {
             console.error('Failed to load pipelines:', error);
             this.pipelines = [];

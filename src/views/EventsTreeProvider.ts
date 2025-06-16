@@ -41,7 +41,7 @@ export class EventsTreeProvider implements vscode.TreeDataProvider<EventItem> {
 
     private async loadRecentEvents() {
         try {
-            const pipelines = await this.controlHubAPI.listPipelines(10);
+            const pipelines = await this.controlHubAPI.listPipelines(undefined, undefined, 10);
             this.events = [];
             
             // Extract recent events from pipelines

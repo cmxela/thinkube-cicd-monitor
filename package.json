@@ -2,13 +2,22 @@
   "name": "thinkube-cicd-monitor",
   "displayName": "Thinkube CI/CD Monitor",
   "description": "Real-time CI/CD pipeline monitoring for Thinkube - Track builds, deployments, and pipeline events directly in VS Code",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "publisher": "thinkube",
   "engines": {
     "vscode": "^1.100.0"
   },
-  "categories": ["Other", "Visualization"],
-  "keywords": ["ci/cd", "pipeline", "monitoring", "thinkube", "kubernetes"],
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "ci/cd",
+    "pipeline",
+    "monitoring",
+    "thinkube",
+    "kubernetes"
+  ],
   "icon": "icon.png",
   "repository": {
     "type": "git",
@@ -134,7 +143,11 @@
         },
         "thinkube-cicd.notificationLevel": {
           "type": "string",
-          "enum": ["all", "failures", "none"],
+          "enum": [
+            "all",
+            "failures",
+            "none"
+          ],
           "default": "failures",
           "description": "Level of notifications to show"
         }
@@ -151,8 +164,9 @@
     "prepublish:ovsx": "npm run compile && npm run package"
   },
   "devDependencies": {
-    "@types/vscode": "^1.100.0",
     "@types/node": "^24.0.0",
+    "@types/vscode": "^1.100.0",
+    "@types/ws": "^8.18.1",
     "@vscode/vsce": "^2.22.0",
     "ovsx": "^0.8.3",
     "typescript": "^5.8.3"

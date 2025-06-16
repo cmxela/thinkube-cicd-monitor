@@ -27,7 +27,7 @@ export class EventStream extends EventEmitter {
                 this.emit('connected');
             });
             
-            this.ws!.on('message', (data) => {
+            this.ws!.on('message', (data: any) => {
                 try {
                     const event = JSON.parse(data.toString());
                     this.emit('pipeline-event', event);
@@ -36,13 +36,13 @@ export class EventStream extends EventEmitter {
                 }
             });
             
-            this.ws!.on('close', (code, reason) => {
+            this.ws!.on('close', (code: any, reason: any) => {
                 console.log(`WebSocket closed: ${code} - ${reason}`);
                 this.emit('disconnected');
                 this.scheduleReconnect();
             });
             
-            this.ws!.on('error', (error) => {
+            this.ws!.on('error', (error: any) => {
                 console.error('WebSocket error:', error);
                 this.emit('error', error);
             });

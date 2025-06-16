@@ -52,12 +52,18 @@ export class ControlHubAPI {
     async listPipelines(appName?: string, status?: string, limit: number = 20): Promise<Pipeline[]> {
         try {
             const response = await this.client.get('/pipelines', {
-                params: { app_name: appName, status, limit }
+                params: { app_name: appName, status, limit },
+                validateStatus: (status) => status === 200
             });
             return response.data;
-        } catch (error) {
-            console.error('Failed to list pipelines:', error);
-            throw error;
+        } catch (error: any) {
+            if (error.response?.status === 401) {
+                console.warn('CI/CD API requires authentication. Returning empty list.');
+                // TODO: Trigger VS Code authentication flow
+            } else {
+                console.error('Failed to list pipelines:', error.message);
+            }
+            return [];
         }
     }
 
@@ -139,10 +145,25 @@ export class ControlHubAPI {
 
     async testConnection(): Promise<boolean> {
         try {
-            await this.client.get('/applications');
-            return true;
-        } catch (error) {
-            return false;
+            // Use health endpoint which doesn't require auth
+            const response = await this.client.get('/health');
+            return response.data.status === 'healthy';
+        } catch (error: any) {
+            // If we get 404, try the pipelines endpoint and accept 401 as valid
+            try {
+                const response = await this.client.get('/pipelines', {
+                    params: { limit: 1 },
+                    validateStatus: (status) => {
+                        // Accept 401 (not authenticated) as a valid response
+                        // This means the API is reachable
+                        return status === 200 || status === 401;
+                    }
+                });
+                return true;
+            } catch (secondError) {
+                console.error('Failed to connect to CI/CD API:', secondError);
+                return false;
+            }
         }
     }
 }

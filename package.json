@@ -90,6 +90,12 @@
         "command": "thinkube-cicd.analyzePipeline",
         "title": "Analyze Pipeline Performance",
         "category": "Thinkube CI/CD"
+      },
+      {
+        "command": "thinkube-cicd.configureToken",
+        "title": "Configure API Token",
+        "category": "Thinkube CI/CD",
+        "icon": "$(key)"
       }
     ],
     "menus": {
@@ -150,6 +156,11 @@
           ],
           "default": "failures",
           "description": "Level of notifications to show"
+        },
+        "thinkube-cicd.apiToken": {
+          "type": "string",
+          "default": "",
+          "description": "API token for authentication (optional). Get from https://control.thinkube.com/#/tokens"
         }
       }
     }

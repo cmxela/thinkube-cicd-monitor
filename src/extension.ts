@@ -82,6 +82,36 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand('thinkube-cicd.configureToken', async () => {
+            const currentToken = vscode.workspace.getConfiguration('thinkube-cicd').get<string>('apiToken');
+            
+            const token = await vscode.window.showInputBox({
+                prompt: 'Enter your Thinkube API token (starts with tk_)',
+                placeHolder: 'tk_...',
+                password: true,
+                value: currentToken || '',
+                validateInput: (value) => {
+                    if (value && !value.startsWith('tk_')) {
+                        return 'API token must start with tk_';
+                    }
+                    return null;
+                }
+            });
+            
+            if (token !== undefined) {
+                await vscode.workspace.getConfiguration('thinkube-cicd').update('apiToken', token, true);
+                if (token) {
+                    vscode.window.showInformationMessage('API token configured successfully. Refreshing...');
+                    pipelineProvider.refresh();
+                    eventsProvider.refresh();
+                } else {
+                    vscode.window.showInformationMessage('API token removed.');
+                }
+            }
+        })
+    );
+
     // Set up auto-refresh
     const refreshInterval = vscode.workspace.getConfiguration('thinkube-cicd').get('refreshInterval', 5000);
     const refreshTimer = setInterval(() => {
@@ -98,10 +128,25 @@ export function activate(context: vscode.ExtensionContext) {
     // Set up WebSocket connection for real-time updates
     setupWebSocket(context, pipelineProvider, eventsProvider);
 
-    // Check API connection
+    // Check API connection and authentication
     controlHubAPI.testConnection().then(connected => {
         if (connected) {
-            vscode.window.showInformationMessage('CI/CD Monitor connected to Thinkube Control Hub');
+            // Check if we have authentication
+            const config = vscode.workspace.getConfiguration('thinkube-cicd');
+            const apiToken = config.get<string>('apiToken');
+            
+            if (apiToken && apiToken.startsWith('tk_')) {
+                vscode.window.showInformationMessage('CI/CD Monitor connected with API token');
+            } else {
+                vscode.window.showInformationMessage(
+                    'CI/CD Monitor connected. For full access, configure an API token in settings.',
+                    'Get Token'
+                ).then(selection => {
+                    if (selection === 'Get Token') {
+                        vscode.env.openExternal(vscode.Uri.parse('https://control.thinkube.com/#/tokens'));
+                    }
+                });
+            }
         } else {
             vscode.window.showWarningMessage('CI/CD Monitor: Unable to connect to API. Check your network connection.');
         }

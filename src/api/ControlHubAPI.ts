@@ -44,8 +44,15 @@ export class ControlHubAPI {
     }
 
     private async getAuthToken(): Promise<string | null> {
-        // This would integrate with Keycloak through thinkube-control
-        // For now, return null to use anonymous access
+        // First check if user has configured an API token
+        const config = vscode.workspace.getConfiguration('thinkube-cicd');
+        const apiToken = config.get<string>('apiToken');
+        
+        if (apiToken && apiToken.startsWith('tk_')) {
+            return apiToken;
+        }
+        
+        // No token configured
         return null;
     }
 

@@ -136,14 +136,14 @@ export function activate(context: vscode.ExtensionContext) {
             const apiToken = config.get<string>('apiToken');
             
             if (apiToken && apiToken.startsWith('tk_')) {
-                vscode.window.showInformationMessage('CI/CD Monitor connected with API token');
+                vscode.window.showInformationMessage('CI/CD Monitor authenticated and ready');
             } else {
-                vscode.window.showInformationMessage(
-                    'CI/CD Monitor connected. For full access, configure an API token in settings.',
-                    'Get Token'
+                vscode.window.showWarningMessage(
+                    'CI/CD Monitor requires an API token to function. Click "Configure Token" to set one up.',
+                    'Configure Token'
                 ).then(selection => {
-                    if (selection === 'Get Token') {
-                        vscode.env.openExternal(vscode.Uri.parse('https://control.thinkube.com/#/tokens'));
+                    if (selection === 'Configure Token') {
+                        vscode.commands.executeCommand('thinkube-cicd.configureToken');
                     }
                 });
             }

@@ -3,6 +3,7 @@ import { PipelineTreeProvider } from './views/PipelineTreeProvider';
 import { EventsTreeProvider } from './views/EventsTreeProvider';
 import { PipelineTimelinePanel } from './views/PipelineTimelinePanel';
 import { ControlHubAPI } from './api/ControlHubAPI';
+import { WebSocketManager } from './api/WebSocketManager';
 
 let controlHubAPI: ControlHubAPI;
 
@@ -158,8 +159,47 @@ async function setupWebSocket(
     pipelineProvider: PipelineTreeProvider,
     eventsProvider: EventsTreeProvider
 ) {
-    // TODO: Implement WebSocket connection through the API
-    // For now, we'll rely on polling via the refresh interval
+    // Connect to WebSocket for real-time pipeline updates
+    const websocketManager = new WebSocketManager(controlHubAPI);
+    
+    // When receiving events, refresh the views
+    websocketManager.on('pipelineEvent', (event) => {
+        // Show notification based on event type and settings
+        const config = vscode.workspace.getConfiguration('thinkube-cicd');
+        const showNotifications = config.get('showNotifications', true);
+        const notificationLevel = config.get('notificationLevel', 'failures');
+        
+        if (showNotifications) {
+            const shouldNotify = notificationLevel === 'all' || 
+                (notificationLevel === 'failures' && ['failed', 'error'].includes(event.status));
+            
+            if (shouldNotify) {
+                const message = `${event.component}: ${event.eventType} - ${event.status}`;
+                if (event.status === 'failed' || event.status === 'error') {
+                    vscode.window.showErrorMessage(message);
+                } else {
+                    vscode.window.showInformationMessage(message);
+                }
+            }
+        }
+        
+        // Refresh the views
+        pipelineProvider.refresh();
+        eventsProvider.refresh();
+    });
+    
+    // Track pipelines when tree items are expanded
+    pipelineProvider.on('pipelineExpanded', (pipelineId: string) => {
+        websocketManager.trackPipeline(pipelineId);
+    });
+    
+    // Connect to WebSocket
+    await websocketManager.connect();
+    
+    // Cleanup on deactivation
+    context.subscriptions.push({
+        dispose: () => websocketManager.disconnect()
+    });
 }
 
 export function deactivate() {

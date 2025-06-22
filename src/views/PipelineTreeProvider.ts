@@ -1,19 +1,28 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { EventEmitter } from 'events';
 import { Pipeline, PipelineStatus, EventType } from '../models/Pipeline';
 import { ControlHubAPI } from '../api/ControlHubAPI';
 
 type TreeNode = PipelineItem | StageItem;
 
-export class PipelineTreeProvider implements vscode.TreeDataProvider<TreeNode> {
+export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDataProvider<TreeNode> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeNode | undefined | null | void> = new vscode.EventEmitter<TreeNode | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TreeNode | undefined | null | void> = this._onDidChangeTreeData.event;
 
     private pipelines: Pipeline[] = [];
     private visible = false;
+    private expandedPipelines = new Set<string>();
 
     constructor(private controlHubAPI: ControlHubAPI) {
+        super();
         this.refresh();
+        
+        // Track which tree items are expanded
+        vscode.commands.registerCommand('thinkube-cicd.trackExpanded', (pipelineId: string) => {
+            this.expandedPipelines.add(pipelineId);
+            this.emit('pipelineExpanded', pipelineId);
+        });
     }
 
     refresh(): void {
@@ -41,6 +50,11 @@ export class PipelineTreeProvider implements vscode.TreeDataProvider<TreeNode> {
             );
         } else if (element instanceof PipelineItem) {
             // Show pipeline stages
+            // Track that this pipeline is expanded
+            if (!this.expandedPipelines.has(element.pipeline.id)) {
+                this.expandedPipelines.add(element.pipeline.id);
+                this.emit('pipelineExpanded', element.pipeline.id);
+            }
             return Promise.resolve(this.getStages(element.pipeline));
         } else {
             // StageItem has no children

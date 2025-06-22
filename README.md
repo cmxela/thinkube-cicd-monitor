@@ -9,6 +9,8 @@ Real-time CI/CD pipeline monitoring extension for code-server within the Thinkub
 - **Pipeline Tree View**: Hierarchical view of running and recent pipelines
 - **Event Stream**: Live feed of CI/CD events across all applications
 - **Visual Timeline**: Interactive timeline showing pipeline stages and durations
+- **Global Event Monitoring**: Single WebSocket connection monitors all pipelines
+- **Automatic Reconnection**: Resilient connection handling with exponential backoff
 
 ### Pipeline Analysis
 - **Performance Metrics**: Track build times, success rates, and deployment frequency

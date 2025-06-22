@@ -62,7 +62,8 @@ export class ControlHubAPI {
                 params: { app_name: appName, status, limit },
                 validateStatus: (status) => status === 200
             });
-            return response.data;
+            // The API returns { pipelines: [...], total: ..., limit: ..., offset: ... }
+            return response.data.pipelines || [];
         } catch (error: any) {
             if (error.response?.status === 401) {
                 console.warn('CI/CD API requires authentication. Returning empty list.');

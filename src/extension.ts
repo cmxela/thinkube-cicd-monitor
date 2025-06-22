@@ -169,12 +169,12 @@ async function setupWebSocket(
         const showNotifications = config.get<boolean>('showNotifications', true);
         const notificationLevel = config.get<string>('notificationLevel', 'failures');
         
-        if (showNotifications) {
+        if (showNotifications && event && event.status && event.eventType) {
             const shouldNotify = notificationLevel === 'all' || 
                 (notificationLevel === 'failures' && ['failed', 'error'].includes(event.status));
             
             if (shouldNotify) {
-                const message = `${event.component}: ${event.eventType} - ${event.status}`;
+                const message = `${event.appName || event.component}: ${event.eventType} - ${event.status}`;
                 if (event.status === 'failed' || event.status === 'error') {
                     vscode.window.showErrorMessage(message);
                 } else {

@@ -166,8 +166,8 @@ async function setupWebSocket(
     websocketManager.on('pipelineEvent', (event) => {
         // Show notification based on event type and settings
         const config = vscode.workspace.getConfiguration('thinkube-cicd');
-        const showNotifications = config.get('showNotifications', true);
-        const notificationLevel = config.get('notificationLevel', 'failures');
+        const showNotifications = config.get<boolean>('showNotifications', true);
+        const notificationLevel = config.get<string>('notificationLevel', 'failures');
         
         if (showNotifications) {
             const shouldNotify = notificationLevel === 'all' || 

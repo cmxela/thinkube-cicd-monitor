@@ -4,31 +4,47 @@ export interface Pipeline {
     startTime: number;
     endTime?: number;
     status: PipelineStatus;
+    stages: PipelineStage[];
     events: PipelineEvent[];
     trigger: PipelineTrigger;
     duration?: number;
 }
 
 export enum PipelineStatus {
+    Pending = 'pending',
     Running = 'running',
-    Success = 'success',
+    Succeeded = 'succeeded',
     Failed = 'failed',
-    Cancelled = 'cancelled',
-    Pending = 'pending'
+    Cancelled = 'cancelled'
+}
+
+export interface PipelineStage {
+    id: string;
+    stageName: string;
+    component: string;
+    status: StageStatus;
+    startedAt: number;
+    completedAt?: number;
+    errorMessage?: string;
+    details: any;
+    duration?: number;
+}
+
+export enum StageStatus {
+    Pending = 'pending',
+    Running = 'running',
+    Succeeded = 'succeeded',
+    Failed = 'failed',
+    Skipped = 'skipped'
 }
 
 export interface PipelineEvent {
     id: string;
-    timestamp: number;
-    eventType: EventType;
-    component: string;
     pipelineId: string;
-    appName: string;
+    timestamp: number;
+    eventType: string;
+    stageId?: string;
     details: any;
-    duration?: number;
-    status: EventStatus;
-    parentEventId?: string;
-    error?: string;
 }
 
 export enum EventType {
@@ -75,13 +91,6 @@ export enum EventType {
     HEALTH_CHECK_FAILED = 'HEALTH_CHECK_FAILED'
 }
 
-export enum EventStatus {
-    Success = 'success',
-    Failed = 'failed',
-    Warning = 'warning',
-    Info = 'info',
-    InProgress = 'in_progress'
-}
 
 export interface PipelineTrigger {
     type: 'manual' | 'git_push' | 'scheduled' | 'api';

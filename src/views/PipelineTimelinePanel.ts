@@ -210,7 +210,7 @@ export class PipelineTimelinePanel {
                 <div class="timeline-segment ${seg.status}" 
                      style="left: ${seg.left}%; width: ${seg.width}%;"
                      title="${seg.label}: ${seg.duration}ms"
-                     onclick="scrollToEvent('${seg.eventId}')">
+                     onclick="scrollToEvent('${seg.stageId}')">
                     ${seg.label}
                 </div>
             `).join('')}
@@ -218,17 +218,17 @@ export class PipelineTimelinePanel {
     </div>
 
     <div class="event-details">
-        <h2>Event Details</h2>
-        ${pipeline.events.map((event, index) => `
-            <div class="event-item" id="event-${event.id}" onclick="toggleDetails('${event.id}')">
+        <h2>Stage Details</h2>
+        ${pipeline.stages.map((stage, index) => `
+            <div class="event-item" id="event-${stage.id}" onclick="toggleDetails('${stage.id}')">
                 <div style="display: flex; justify-content: space-between;">
-                    <strong>${event.eventType}</strong>
-                    <span class="event-time">${new Date(event.timestamp * 1000).toLocaleTimeString()}</span>
+                    <strong>${stage.stageName}</strong>
+                    <span class="event-time">${new Date(stage.startedAt * 1000).toLocaleTimeString()}</span>
                 </div>
-                <div>Component: ${event.component} | Status: ${event.status}</div>
-                ${event.error ? `<div style="color: var(--vscode-errorForeground);">Error: ${event.error}</div>` : ''}
-                <div class="event-details-panel" id="details-${event.id}">
-                    <pre>${JSON.stringify(event.details || {}, null, 2)}</pre>
+                <div>Component: ${stage.component} | Status: ${stage.status} | Duration: ${stage.duration ? Math.round(stage.duration / 1000) + 's' : 'Running'}</div>
+                ${stage.errorMessage ? `<div style="color: var(--vscode-errorForeground);">Error: ${stage.errorMessage}</div>` : ''}
+                <div class="event-details-panel" id="details-${stage.id}">
+                    <pre>${JSON.stringify(stage.details || {}, null, 2)}</pre>
                 </div>
             </div>
         `).join('')}
@@ -256,7 +256,7 @@ export class PipelineTimelinePanel {
     }
 
     private _calculateTimelineData(pipeline: Pipeline) {
-        if (pipeline.events.length === 0) {
+        if (pipeline.stages.length === 0) {
             return { segments: [] };
         }
 
@@ -265,65 +265,24 @@ export class PipelineTimelinePanel {
         const totalDuration = endTime - startTime;
 
         const segments: any[] = [];
-        const stages = new Map<string, { start: number, end: number, status: string, events: PipelineEvent[] }>();
 
-        // Group events by stage
-        pipeline.events.forEach((event, index) => {
-            const stage = this._getEventStage(event.eventType);
-            
-            if (!stages.has(stage)) {
-                stages.set(stage, {
-                    start: event.timestamp * 1000,
-                    end: event.timestamp * 1000,
-                    status: event.status,
-                    events: [event]
-                });
-            } else {
-                const stageData = stages.get(stage)!;
-                stageData.end = event.timestamp * 1000;
-                stageData.status = event.status;
-                stageData.events.push(event);
-            }
-        });
-
-        // Create segments
-        stages.forEach((stageData, stage) => {
-            const left = ((stageData.start - startTime) / totalDuration) * 100;
-            const width = ((stageData.end - stageData.start) / totalDuration) * 100 || 1;
+        // Create segments from stages
+        pipeline.stages.forEach(stage => {
+            const stageStart = stage.startedAt * 1000;
+            const stageEnd = stage.completedAt ? stage.completedAt * 1000 : Date.now();
+            const left = ((stageStart - startTime) / totalDuration) * 100;
+            const width = ((stageEnd - stageStart) / totalDuration) * 100 || 1;
             
             segments.push({
-                label: stage,
+                label: stage.stageName,
                 left: Math.max(0, left),
                 width: Math.max(1, width),
-                duration: stageData.end - stageData.start,
-                status: stageData.status,
-                eventId: stageData.events[0].id
+                duration: stageEnd - stageStart,
+                status: stage.status,
+                stageId: stage.id
             });
         });
 
         return { segments };
-    }
-
-    private _getEventStage(eventType: EventType): string {
-        const stageMap: { [key: string]: string } = {
-            [EventType.GIT_PUSH]: 'Source',
-            [EventType.WEBHOOK_RECEIVED]: 'Webhook',
-            [EventType.WORKFLOW_START]: 'Workflow',
-            [EventType.BUILD_START]: 'Build',
-            [EventType.BUILD_COMPLETE]: 'Build',
-            [EventType.IMAGE_PUSH]: 'Registry',
-            [EventType.UPDATER_CHECK]: 'Update',
-            [EventType.ARGOCD_SYNC]: 'Sync',
-            [EventType.DEPLOY_START]: 'Deploy',
-            [EventType.DEPLOY_COMPLETE]: 'Deploy'
-        };
-
-        for (const [type, stage] of Object.entries(stageMap)) {
-            if (eventType.includes(type as any)) {
-                return stage;
-            }
-        }
-
-        return 'Other';
     }
 }

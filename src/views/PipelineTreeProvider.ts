@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { EventEmitter } from 'events';
-import { Pipeline, PipelineStatus, EventType } from '../models/Pipeline';
+import { Pipeline, PipelineStatus, PipelineStage, StageStatus, EventType } from '../models/Pipeline';
 import { ControlHubAPI } from '../api/ControlHubAPI';
 
 type TreeNode = PipelineItem | StageItem;
@@ -73,25 +73,20 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
 
     private getStages(pipeline: Pipeline): StageItem[] {
         const stages: StageItem[] = [];
-        const stageGroups = new Map<string, Pipeline['events']>();
 
-        // Group events by stage
-        pipeline.events.forEach(event => {
-            const stage = this.getEventStage(event.eventType);
-            if (!stageGroups.has(stage)) {
-                stageGroups.set(stage, []);
-            }
-            stageGroups.get(stage)!.push(event);
-        });
+        // Use actual stages from the pipeline
+        pipeline.stages.forEach(stage => {
+            const duration = stage.duration || 
+                (stage.completedAt && stage.startedAt ? 
+                    (stage.completedAt - stage.startedAt) * 1000 : 0);
 
-        // Create stage items
-        stageGroups.forEach((events, stage) => {
-            const lastEvent = events[events.length - 1];
-            const duration = events.length > 1 
-                ? events[events.length - 1].timestamp - events[0].timestamp 
-                : 0;
-
-            stages.push(new StageItem(stage, lastEvent.status, duration, pipeline.id));
+            stages.push(new StageItem(
+                stage.stageName, 
+                stage.status, 
+                duration, 
+                pipeline.id,
+                stage.id
+            ));
         });
 
         return stages;
@@ -169,7 +164,7 @@ export class PipelineItem extends vscode.TreeItem {
 
     private getIcon(): vscode.ThemeIcon {
         switch (this.pipeline.status) {
-            case PipelineStatus.Success:
+            case PipelineStatus.Succeeded:
                 return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
             case PipelineStatus.Failed:
                 return new vscode.ThemeIcon('x', new vscode.ThemeColor('testing.iconFailed'));
@@ -188,7 +183,8 @@ class StageItem extends vscode.TreeItem {
         public readonly stage: string,
         public readonly status: string,
         public readonly duration: number,
-        public readonly pipelineId: string
+        public readonly pipelineId: string,
+        public readonly stageId: string
     ) {
         super(stage, vscode.TreeItemCollapsibleState.None);
         
@@ -199,11 +195,11 @@ class StageItem extends vscode.TreeItem {
     }
 
     private getIcon(): vscode.ThemeIcon {
-        if (this.status === 'success') {
+        if (this.status === 'succeeded') {
             return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
         } else if (this.status === 'failed') {
             return new vscode.ThemeIcon('x', new vscode.ThemeColor('testing.iconFailed'));
-        } else if (this.status === 'in_progress') {
+        } else if (this.status === 'running') {
             return new vscode.ThemeIcon('sync~spin');
         } else {
             return new vscode.ThemeIcon('circle-outline');

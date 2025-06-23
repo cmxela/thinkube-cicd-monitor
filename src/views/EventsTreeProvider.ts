@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { PipelineEvent, EventType, EventStatus } from '../models/Pipeline';
+import { PipelineEvent, EventType } from '../models/Pipeline';
 import { ControlHubAPI } from '../api/ControlHubAPI';
 
 export class EventsTreeProvider implements vscode.TreeDataProvider<EventItem> {
@@ -83,21 +83,14 @@ export class EventItem extends vscode.TreeItem {
 
     private getDescription(): string {
         const time = new Date(this.event.timestamp * 1000).toLocaleTimeString();
-        return `${this.event.appName} - ${time}`;
+        return time;
     }
 
     private getTooltip(): vscode.MarkdownString {
         const tooltip = new vscode.MarkdownString();
         
         tooltip.appendMarkdown(`**${this.event.eventType}**\n\n`);
-        tooltip.appendMarkdown(`App: ${this.event.appName}\n\n`);
-        tooltip.appendMarkdown(`Component: ${this.event.component}\n\n`);
-        tooltip.appendMarkdown(`Status: ${this.event.status}\n\n`);
         tooltip.appendMarkdown(`Time: ${new Date(this.event.timestamp * 1000).toLocaleString()}\n\n`);
-        
-        if (this.event.error) {
-            tooltip.appendMarkdown(`Error: ${this.event.error}\n\n`);
-        }
         
         if (this.event.details) {
             tooltip.appendMarkdown(`Details:\n`);
@@ -108,18 +101,16 @@ export class EventItem extends vscode.TreeItem {
     }
 
     private getIcon(): vscode.ThemeIcon {
-        // Icon based on status
-        switch (this.event.status) {
-            case EventStatus.Success:
-                return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
-            case EventStatus.Failed:
-                return new vscode.ThemeIcon('x', new vscode.ThemeColor('testing.iconFailed'));
-            case EventStatus.Warning:
-                return new vscode.ThemeIcon('warning', new vscode.ThemeColor('list.warningForeground'));
-            case EventStatus.InProgress:
-                return new vscode.ThemeIcon('sync~spin');
-            default:
-                return new vscode.ThemeIcon('info');
+        // Icon based on event type
+        if (this.event.eventType.includes('failed') || this.event.eventType.includes('error')) {
+            return new vscode.ThemeIcon('x', new vscode.ThemeColor('testing.iconFailed'));
+        } else if (this.event.eventType.includes('started')) {
+            return new vscode.ThemeIcon('play');
+        } else if (this.event.eventType.includes('completed') || this.event.eventType.includes('succeeded')) {
+            return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
+        } else if (this.event.eventType.includes('webhook')) {
+            return new vscode.ThemeIcon('webhook');
         }
+        return new vscode.ThemeIcon('circle-filled');
     }
 }

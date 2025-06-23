@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import * as vscode from 'vscode';
-import { Pipeline, PipelineEvent, PipelineMetrics } from '../models/Pipeline';
+import { Pipeline, PipelineEvent, PipelineStage, PipelineMetrics } from '../models/Pipeline';
 
 export class ControlHubAPI {
     private client: AxiosInstance;
@@ -87,6 +87,7 @@ export class ControlHubAPI {
                 startTime: p.startedAt || p.startTime,
                 endTime: p.completedAt || p.endTime,
                 status: p.status?.toLowerCase() || 'pending',
+                stages: p.stages || [],
                 events: p.events || [],
                 trigger: {
                     type: p.triggerType || 'manual',
@@ -120,18 +121,23 @@ export class ControlHubAPI {
                 startTime: p.startedAt || p.startTime,
                 endTime: p.completedAt || p.endTime,
                 status: p.status?.toLowerCase() || 'pending',
+                stages: (p.stages || []).map((s: any) => ({
+                    id: s.id,
+                    stageName: s.stageName,
+                    component: s.component,
+                    status: s.status?.toLowerCase() || 'pending',
+                    startedAt: s.startedAt || 0,
+                    completedAt: s.completedAt,
+                    errorMessage: s.errorMessage,
+                    details: s.details || {},
+                    duration: s.duration
+                })),
                 events: (p.events || []).map((e: any) => ({
                     id: e.id,
-                    timestamp: e.startedAt || e.timestamp || 0,
+                    timestamp: e.timestamp || 0,
                     eventType: e.eventType,
-                    component: e.component,
-                    pipelineId: p.id,
-                    appName: p.appName,
-                    details: e.details || {},
-                    duration: e.completedAt && e.startedAt ? (e.completedAt - e.startedAt) * 1000 : undefined,
-                    status: e.status?.toLowerCase() || 'pending',
-                    parentEventId: e.parentEventId,
-                    error: e.errorMessage || e.error
+                    stageId: e.stageId,
+                    details: e.details || {}
                 })),
                 trigger: {
                     type: p.triggerType || 'manual',

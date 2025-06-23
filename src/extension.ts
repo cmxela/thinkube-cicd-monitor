@@ -30,8 +30,17 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.commands.registerCommand('thinkube-cicd.showPipeline', async (pipelineId: string) => {
-            const pipeline = await controlHubAPI.getPipeline(pipelineId);
+        vscode.commands.registerCommand('thinkube-cicd.showPipeline', async (treeItem: any, pipelineId?: string) => {
+            // When called from tree item, first arg is the tree item, second is the pipeline ID
+            // When called programmatically, first arg might be the pipeline ID directly
+            const id = pipelineId || (typeof treeItem === 'string' ? treeItem : undefined);
+            
+            if (!id) {
+                vscode.window.showErrorMessage('Pipeline ID not provided');
+                return;
+            }
+            
+            const pipeline = await controlHubAPI.getPipeline(id);
             if (pipeline) {
                 PipelineTimelinePanel.render(context.extensionUri, pipeline);
             }

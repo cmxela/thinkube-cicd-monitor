@@ -63,7 +63,25 @@ export class ControlHubAPI {
                 validateStatus: (status) => status === 200
             });
             // The API returns { pipelines: [...], total: ..., limit: ..., offset: ... }
-            return response.data.pipelines || [];
+            const pipelines = response.data.pipelines || [];
+            
+            // Map API response to Pipeline interface
+            return pipelines.map((p: any) => ({
+                id: p.id,
+                appName: p.appName,
+                startTime: p.startedAt || p.startTime,
+                endTime: p.completedAt || p.endTime,
+                status: p.status?.toLowerCase() || 'pending',
+                events: p.events || [],
+                trigger: {
+                    type: p.triggerType || 'manual',
+                    user: p.triggerUser,
+                    branch: p.branch,
+                    commit: p.commitSha,
+                    message: p.commitMessage
+                },
+                duration: p.duration
+            }));
         } catch (error: any) {
             if (error.response?.status === 401) {
                 console.warn('CI/CD API requires authentication. Returning empty list.');
@@ -78,7 +96,25 @@ export class ControlHubAPI {
     async getPipeline(pipelineId: string): Promise<Pipeline | null> {
         try {
             const response = await this.client.get(`/pipelines/${pipelineId}`);
-            return response.data;
+            const p = response.data;
+            
+            // Map API response to Pipeline interface
+            return {
+                id: p.id,
+                appName: p.appName,
+                startTime: p.startedAt || p.startTime,
+                endTime: p.completedAt || p.endTime,
+                status: p.status?.toLowerCase() || 'pending',
+                events: p.events || [],
+                trigger: {
+                    type: p.triggerType || 'manual',
+                    user: p.triggerUser,
+                    branch: p.branch,
+                    commit: p.commitSha,
+                    message: p.commitMessage
+                },
+                duration: p.duration
+            };
         } catch (error) {
             if (axios.isAxiosError(error) && error.response?.status === 404) {
                 return null;

@@ -120,7 +120,19 @@ export class ControlHubAPI {
                 startTime: p.startedAt || p.startTime,
                 endTime: p.completedAt || p.endTime,
                 status: p.status?.toLowerCase() || 'pending',
-                events: p.events || [],
+                events: (p.events || []).map((e: any) => ({
+                    id: e.id,
+                    timestamp: e.startedAt || e.timestamp || 0,
+                    eventType: e.eventType,
+                    component: e.component,
+                    pipelineId: p.id,
+                    appName: p.appName,
+                    details: e.details || {},
+                    duration: e.completedAt && e.startedAt ? (e.completedAt - e.startedAt) * 1000 : undefined,
+                    status: e.status?.toLowerCase() || 'pending',
+                    parentEventId: e.parentEventId,
+                    error: e.errorMessage || e.error
+                })),
                 trigger: {
                     type: p.triggerType || 'manual',
                     user: p.triggerUser,

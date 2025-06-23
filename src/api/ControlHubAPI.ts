@@ -31,6 +31,9 @@ export class ControlHubAPI {
                     const token = await this.getAuthToken();
                     if (token) {
                         config.headers.Authorization = `Bearer ${token}`;
+                        console.log('API request with token:', config.url);
+                    } else {
+                        console.warn('No API token available for request:', config.url);
                     }
                 } catch (error) {
                     console.warn('Could not get auth token:', error);
@@ -44,7 +47,7 @@ export class ControlHubAPI {
     }
 
     private async getAuthToken(): Promise<string | null> {
-        // First check if user has configured an API token
+        // Always get fresh config to ensure we have the latest token
         const config = vscode.workspace.getConfiguration('thinkube-cicd');
         const apiToken = config.get<string>('apiToken');
         
@@ -53,7 +56,19 @@ export class ControlHubAPI {
         }
         
         // No token configured
+        console.warn('No API token configured or token does not start with tk_');
         return null;
+    }
+    
+    public refreshConfig(): void {
+        // Update base URL if changed
+        const config = vscode.workspace.getConfiguration('thinkube-cicd');
+        const newBaseURL = config.get('apiUrl', 'https://control.thinkube.com');
+        
+        if (newBaseURL !== this.baseURL) {
+            this.baseURL = newBaseURL;
+            this.client.defaults.baseURL = `${this.baseURL}/api/v1/cicd`;
+        }
     }
 
     async listPipelines(appName?: string, status?: string, limit: number = 20): Promise<Pipeline[]> {
@@ -116,8 +131,14 @@ export class ControlHubAPI {
                 duration: p.duration
             };
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.status === 404) {
-                return null;
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 404) {
+                    return null;
+                }
+                if (error.response?.status === 401) {
+                    console.error('Authentication failed for pipeline request. Token may be invalid or expired.');
+                    vscode.window.showErrorMessage('Authentication failed. Please check your API token configuration.');
+                }
             }
             console.error('Failed to get pipeline:', error);
             throw error;

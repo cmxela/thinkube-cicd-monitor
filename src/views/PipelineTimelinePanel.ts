@@ -199,7 +199,7 @@ export class PipelineTimelinePanel {
         <div class="metadata">
             <div>Started: ${new Date(pipeline.startTime * 1000).toLocaleString()}</div>
             ${pipeline.endTime ? `<div>Ended: ${new Date(pipeline.endTime * 1000).toLocaleString()}</div>` : ''}
-            ${pipeline.duration ? `<div>Duration: ${Math.round(pipeline.duration / 1000)}s</div>` : ''}
+            ${pipeline.duration ? `<div>Duration: ${Math.round(pipeline.duration)}s</div>` : ''}
             <div>Trigger: ${pipeline.trigger.type}${pipeline.trigger.user ? ` by ${pipeline.trigger.user}` : ''}</div>
         </div>
     </div>
@@ -225,7 +225,7 @@ export class PipelineTimelinePanel {
                     <strong>${stage.stageName}</strong>
                     <span class="event-time">${new Date(stage.startedAt * 1000).toLocaleTimeString()}</span>
                 </div>
-                <div>Component: ${stage.component} | Status: ${stage.status} | Duration: ${stage.duration ? Math.round(stage.duration / 1000) + 's' : 'Running'}</div>
+                <div>Component: ${stage.component} | Status: ${stage.status} | Duration: ${stage.duration ? Math.round(stage.duration) + 's' : 'Running'}</div>
                 ${stage.errorMessage ? `<div style="color: var(--vscode-errorForeground);">Error: ${stage.errorMessage}</div>` : ''}
                 <div class="event-details-panel" id="details-${stage.id}">
                     <pre>${JSON.stringify(stage.details || {}, null, 2)}</pre>

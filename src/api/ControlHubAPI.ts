@@ -96,7 +96,7 @@ export class ControlHubAPI {
                     completedAt: s.completedAt,
                     errorMessage: s.errorMessage,
                     details: s.details || {},
-                    duration: s.duration || (s.completedAt && s.startedAt ? (s.completedAt - s.startedAt) * 1000 : undefined)
+                    duration: s.duration
                 })),
                 events: p.events || [],
                 trigger: {
@@ -140,7 +140,7 @@ export class ControlHubAPI {
                     completedAt: s.completedAt,
                     errorMessage: s.errorMessage,
                     details: s.details || {},
-                    duration: s.duration || (s.completedAt && s.startedAt ? (s.completedAt - s.startedAt) * 1000 : undefined)
+                    duration: s.duration
                 })),
                 events: (p.events || []).map((e: any) => ({
                     id: e.id,

@@ -190,7 +190,7 @@ export class PipelineTimelinePanel {
                     <strong>${stage.stageName}</strong>
                     <span class="event-time">${new Date(stage.startedAt * 1000).toLocaleTimeString()}</span>
                 </div>
-                <div>Component: ${stage.component} | Status: ${stage.status} | Duration: ${stage.duration !== null && stage.duration !== undefined ? Math.round(stage.duration) + 's' : 'Running'}</div>
+                <div>Component: ${stage.component} | Status: ${stage.status} | Duration: ${stage.duration !== null && stage.duration !== undefined && stage.duration >= 0 ? Math.round(stage.duration) + 's' : 'Running'}</div>
                 ${stage.errorMessage ? `<div style="color: var(--vscode-errorForeground);">Error: ${stage.errorMessage}</div>` : ''}
                 <div class="event-details-panel" id="details-${stage.id}">
                     <pre>${JSON.stringify(stage.details || {}, null, 2)}</pre>
@@ -228,43 +228,33 @@ export class PipelineTimelinePanel {
         // Sort stages by start time
         const sortedStages = [...pipeline.stages].sort((a, b) => a.startedAt - b.startedAt);
         
-        // Build the Gantt chart
+        // Build the Gantt chart using proper Mermaid syntax
         let gantt = 'gantt\n';
         gantt += `    title ${pipeline.appName} Pipeline Execution\n`;
-        gantt += '    dateFormat X\n';
+        gantt += '    dateFormat X\n';  // Unix timestamp format
         gantt += '    axisFormat %H:%M:%S\n';
         
-        // Add sections for different components
-        const componentGroups = new Map<string, typeof sortedStages>();
-        sortedStages.forEach(stage => {
-            if (!componentGroups.has(stage.component)) {
-                componentGroups.set(stage.component, []);
-            }
-            componentGroups.get(stage.component)!.push(stage);
-        });
-        
-        // Add stages by component
-        componentGroups.forEach((stages, component) => {
-            gantt += `    section ${component}\n`;
+        // Add each stage without sections (sections seem to cause issues)
+        sortedStages.forEach((stage, index) => {
+            const startTime = stage.startedAt;
+            const endTime = stage.completedAt || Math.floor(Date.now() / 1000);
             
-            stages.forEach(stage => {
-                const startTime = stage.startedAt;
-                const endTime = stage.completedAt || Math.floor(Date.now() / 1000);
-                const duration = endTime - startTime;
-                
-                // Determine status for styling
-                let status = '';
-                if (stage.status === 'succeeded') {
-                    status = 'done,';
-                } else if (stage.status === 'failed') {
-                    status = 'crit,';
-                } else if (stage.status === 'running') {
-                    status = 'active,';
-                }
-                
-                // Format: taskName :status, id, start, duration
-                gantt += `    ${stage.stageName} :${status}${stage.id.substring(0, 8)}, ${startTime}, ${duration}s\n`;
-            });
+            // Determine status for styling
+            let status = '';
+            if (stage.status === 'succeeded') {
+                status = 'done, ';
+            } else if (stage.status === 'failed') {
+                status = 'crit, ';
+            } else if (stage.status === 'running') {
+                status = 'active, ';
+            }
+            
+            // Create a safe task name and ID
+            const taskName = `${stage.stageName} (${stage.component})`;
+            const taskId = `task${index}`;
+            
+            // Format based on Mermaid documentation: taskName :status, taskId, startDate, endDate
+            gantt += `    ${taskName} :${status}${taskId}, ${startTime}, ${endTime}\n`;
         });
         
         return gantt;

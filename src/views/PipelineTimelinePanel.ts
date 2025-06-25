@@ -222,64 +222,51 @@ export class PipelineTimelinePanel {
 
     private _generateMermaidDiagram(pipeline: Pipeline) {
         if (pipeline.stages.length === 0) {
-            return 'graph LR\n    A[No stages]';
+            return 'gantt\n    title No stages\n    dateFormat X\n    axisFormat %s';
         }
 
         // Sort stages by start time
         const sortedStages = [...pipeline.stages].sort((a, b) => a.startedAt - b.startedAt);
         
-        // Group stages by their start time to identify parallel stages
-        const stageGroups: Map<number, typeof sortedStages> = new Map();
+        // Build the Gantt chart
+        let gantt = 'gantt\n';
+        gantt += `    title ${pipeline.appName} Pipeline Execution\n`;
+        gantt += '    dateFormat X\n';
+        gantt += '    axisFormat %H:%M:%S\n';
+        
+        // Add sections for different components
+        const componentGroups = new Map<string, typeof sortedStages>();
         sortedStages.forEach(stage => {
-            const startTime = stage.startedAt;
-            if (!stageGroups.has(startTime)) {
-                stageGroups.set(startTime, []);
+            if (!componentGroups.has(stage.component)) {
+                componentGroups.set(stage.component, []);
             }
-            stageGroups.get(startTime)!.push(stage);
+            componentGroups.get(stage.component)!.push(stage);
         });
-
-        // Build the graph
-        let graph = 'graph LR\n';
-        let prevGroupIds: string[] = [];
         
-        Array.from(stageGroups.entries()).forEach(([startTime, stages], groupIndex) => {
-            const currentGroupIds: string[] = [];
+        // Add stages by component
+        componentGroups.forEach((stages, component) => {
+            gantt += `    section ${component}\n`;
             
-            stages.forEach((stage, stageIndex) => {
-                const stageId = stage.id.substring(0, 8); // Use first 8 chars of UUID
-                const duration = stage.duration !== null && stage.duration !== undefined 
-                    ? `${Math.round(stage.duration)}s` 
-                    : 'Running';
-                const statusIcon = stage.status === 'succeeded' ? '✓' : 
-                                 stage.status === 'failed' ? '✗' : 
-                                 stage.status === 'running' ? '⟳' : '○';
+            stages.forEach(stage => {
+                const startTime = stage.startedAt;
+                const endTime = stage.completedAt || Math.floor(Date.now() / 1000);
+                const duration = endTime - startTime;
                 
-                graph += `    ${stageId}["${statusIcon} ${stage.stageName}<br/>${duration}"]\n`;
-                
-                // Style based on status
+                // Determine status for styling
+                let status = '';
                 if (stage.status === 'succeeded') {
-                    graph += `    style ${stageId} fill:#4caf50,stroke:#2e7d32,color:#fff\n`;
+                    status = 'done,';
                 } else if (stage.status === 'failed') {
-                    graph += `    style ${stageId} fill:#f44336,stroke:#c62828,color:#fff\n`;
+                    status = 'crit,';
                 } else if (stage.status === 'running') {
-                    graph += `    style ${stageId} fill:#2196f3,stroke:#1565c0,color:#fff\n`;
-                } else {
-                    graph += `    style ${stageId} fill:#9e9e9e,stroke:#616161,color:#fff\n`;
+                    status = 'active,';
                 }
                 
-                currentGroupIds.push(stageId);
-                
-                // Connect from previous stages
-                if (prevGroupIds.length > 0) {
-                    prevGroupIds.forEach(prevId => {
-                        graph += `    ${prevId} --> ${stageId}\n`;
-                    });
-                }
+                // Format: taskName :status, id, start, duration
+                gantt += `    ${stage.stageName} :${status}${stage.id.substring(0, 8)}, ${startTime}, ${duration}s\n`;
             });
-            
-            prevGroupIds = currentGroupIds;
         });
         
-        return graph;
+        return gantt;
     }
 }

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { PipelineTreeProvider } from './views/PipelineTreeProvider';
-import { EventsTreeProvider } from './views/EventsTreeProvider';
 import { PipelineTimelinePanel } from './views/PipelineTimelinePanel';
 import { ControlHubAPI } from './api/ControlHubAPI';
 import { WebSocketManager } from './api/WebSocketManager';
@@ -13,19 +12,16 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize the API client
     controlHubAPI = new ControlHubAPI();
 
-    // Create tree data providers using the API
+    // Create tree data provider using the API
     const pipelineProvider = new PipelineTreeProvider(controlHubAPI);
-    const eventsProvider = new EventsTreeProvider(controlHubAPI);
 
-    // Register tree data providers
+    // Register tree data provider
     vscode.window.registerTreeDataProvider('thinkube-cicd.pipelines', pipelineProvider);
-    vscode.window.registerTreeDataProvider('thinkube-cicd.events', eventsProvider);
 
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('thinkube-cicd.refreshPipelines', () => {
             pipelineProvider.refresh();
-            eventsProvider.refresh();
         })
     );
 
@@ -121,7 +117,6 @@ export function activate(context: vscode.ExtensionContext) {
                 if (token) {
                     vscode.window.showInformationMessage('API token configured successfully. Refreshing...');
                     pipelineProvider.refresh();
-                    eventsProvider.refresh();
                 } else {
                     vscode.window.showInformationMessage('API token removed.');
                 }
@@ -134,7 +129,6 @@ export function activate(context: vscode.ExtensionContext) {
     const refreshTimer = setInterval(() => {
         if (pipelineProvider.isVisible()) {
             pipelineProvider.refresh();
-            eventsProvider.refresh();
         }
     }, refreshInterval);
 
@@ -143,7 +137,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // Set up WebSocket connection for real-time updates
-    setupWebSocket(context, pipelineProvider, eventsProvider);
+    setupWebSocket(context, pipelineProvider);
 
     // Check API connection and authentication
     controlHubAPI.testConnection().then(connected => {
@@ -172,8 +166,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function setupWebSocket(
     context: vscode.ExtensionContext, 
-    pipelineProvider: PipelineTreeProvider,
-    eventsProvider: EventsTreeProvider
+    pipelineProvider: PipelineTreeProvider
 ) {
     // Connect to WebSocket for real-time pipeline updates
     const websocketManager = new WebSocketManager(controlHubAPI);
@@ -199,9 +192,8 @@ async function setupWebSocket(
             }
         }
         
-        // Refresh the views
+        // Refresh the view
         pipelineProvider.refresh();
-        eventsProvider.refresh();
     });
     
     // Track pipelines when tree items are expanded

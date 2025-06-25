@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { EventEmitter } from 'events';
-import { Pipeline, PipelineStatus, PipelineStage, StageStatus, EventType } from '../models/Pipeline';
+import { Pipeline, PipelineStatus, PipelineStage, StageStatus } from '../models/Pipeline';
 import { ControlHubAPI } from '../api/ControlHubAPI';
 
 type TreeNode = PipelineItem | StageItem | LoadingItem;
@@ -142,31 +142,6 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
         return stages;
     }
 
-    private getEventStage(eventType: EventType): string {
-        const stageMap: { [key: string]: string } = {
-            [EventType.GIT_PUSH]: 'Source',
-            [EventType.WEBHOOK_RECEIVED]: 'Source',
-            [EventType.WORKFLOW_START]: 'Workflow',
-            [EventType.WORKFLOW_COMPLETE]: 'Workflow',
-            [EventType.WORKFLOW_FAILED]: 'Workflow',
-            [EventType.BUILD_START]: 'Build',
-            [EventType.BUILD_COMPLETE]: 'Build',
-            [EventType.BUILD_FAILED]: 'Build',
-            [EventType.IMAGE_PUSH]: 'Registry',
-            [EventType.IMAGE_PUSH_FAILED]: 'Registry',
-            [EventType.HARBOR_WEBHOOK]: 'Registry',
-            [EventType.UPDATER_CHECK]: 'Image Update',
-            [EventType.UPDATER_COMMIT]: 'Image Update',
-            [EventType.ARGOCD_WEBHOOK]: 'ArgoCD',
-            [EventType.ARGOCD_SYNC]: 'ArgoCD',
-            [EventType.SYNC_FAILED]: 'ArgoCD',
-            [EventType.DEPLOY_START]: 'Deploy',
-            [EventType.DEPLOY_COMPLETE]: 'Deploy',
-            [EventType.DEPLOY_TIMEOUT]: 'Deploy'
-        };
-
-        return stageMap[eventType] || 'Unknown';
-    }
 }
 
 export class PipelineItem extends vscode.TreeItem {
@@ -214,13 +189,13 @@ export class PipelineItem extends vscode.TreeItem {
 
     private getIcon(): vscode.ThemeIcon {
         switch (this.pipeline.status) {
-            case PipelineStatus.Succeeded:
+            case PipelineStatus.SUCCEEDED:
                 return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
-            case PipelineStatus.Failed:
+            case PipelineStatus.FAILED:
                 return new vscode.ThemeIcon('x', new vscode.ThemeColor('testing.iconFailed'));
-            case PipelineStatus.Running:
+            case PipelineStatus.RUNNING:
                 return new vscode.ThemeIcon('sync~spin');
-            case PipelineStatus.Cancelled:
+            case PipelineStatus.CANCELLED:
                 return new vscode.ThemeIcon('circle-slash');
             default:
                 return new vscode.ThemeIcon('circle-outline');
@@ -245,12 +220,14 @@ class StageItem extends vscode.TreeItem {
     }
 
     private getIcon(): vscode.ThemeIcon {
-        if (this.status === 'succeeded') {
+        if (this.status === StageStatus.SUCCEEDED) {
             return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
-        } else if (this.status === 'failed') {
+        } else if (this.status === StageStatus.FAILED) {
             return new vscode.ThemeIcon('x', new vscode.ThemeColor('testing.iconFailed'));
-        } else if (this.status === 'running') {
+        } else if (this.status === StageStatus.RUNNING) {
             return new vscode.ThemeIcon('sync~spin');
+        } else if (this.status === StageStatus.SKIPPED) {
+            return new vscode.ThemeIcon('circle-slash');
         } else {
             return new vscode.ThemeIcon('circle-outline');
         }

@@ -5,18 +5,17 @@ export interface Pipeline {
     endTime?: number;
     status: PipelineStatus;
     stages: PipelineStage[];
-    events: PipelineEvent[];
     trigger: PipelineTrigger;
     duration?: number;
     stageCount?: number;
 }
 
 export enum PipelineStatus {
-    Pending = 'pending',
-    Running = 'running',
-    Succeeded = 'succeeded',
-    Failed = 'failed',
-    Cancelled = 'cancelled'
+    PENDING = 'PENDING',
+    RUNNING = 'RUNNING',
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+    CANCELLED = 'CANCELLED'
 }
 
 export interface PipelineStage {
@@ -32,65 +31,13 @@ export interface PipelineStage {
 }
 
 export enum StageStatus {
-    Pending = 'pending',
-    Running = 'running',
-    Succeeded = 'succeeded',
-    Failed = 'failed',
-    Skipped = 'skipped'
+    PENDING = 'PENDING',
+    RUNNING = 'RUNNING',
+    SUCCEEDED = 'SUCCEEDED',
+    FAILED = 'FAILED',
+    SKIPPED = 'SKIPPED'
 }
 
-export interface PipelineEvent {
-    id: string;
-    pipelineId: string;
-    timestamp: number;
-    eventType: string;
-    stageId?: string;
-    details: any;
-}
-
-export enum EventType {
-    // Git events
-    GIT_PUSH = 'GIT_PUSH',
-    WEBHOOK_RECEIVED = 'WEBHOOK_RECEIVED',
-    
-    // Workflow events
-    WORKFLOW_START = 'WORKFLOW_START',
-    WORKFLOW_COMPLETE = 'WORKFLOW_COMPLETE',
-    WORKFLOW_FAILED = 'WORKFLOW_FAILED',
-    
-    // Build events
-    BUILD_START = 'BUILD_START',
-    BUILD_COMPLETE = 'BUILD_COMPLETE',
-    BUILD_FAILED = 'BUILD_FAILED',
-    BUILD_TIMEOUT = 'BUILD_TIMEOUT',
-    
-    // Registry events
-    IMAGE_PUSH = 'IMAGE_PUSH',
-    IMAGE_PUSH_FAILED = 'IMAGE_PUSH_FAILED',
-    HARBOR_WEBHOOK = 'HARBOR_WEBHOOK',
-    
-    // Image Updater events
-    UPDATER_CHECK = 'UPDATER_CHECK',
-    UPDATER_COMMIT = 'UPDATER_COMMIT',
-    UPDATER_SKIP = 'UPDATER_SKIP',
-    
-    // ArgoCD events
-    ARGOCD_WEBHOOK = 'ARGOCD_WEBHOOK',
-    ARGOCD_SYNC = 'ARGOCD_SYNC',
-    SYNC_FAILED = 'SYNC_FAILED',
-    
-    // Deployment events
-    DEPLOY_START = 'DEPLOY_START',
-    DEPLOY_COMPLETE = 'DEPLOY_COMPLETE',
-    DEPLOY_TIMEOUT = 'DEPLOY_TIMEOUT',
-    POD_CRASHLOOP = 'POD_CRASHLOOP',
-    
-    // Error events
-    WEBHOOK_TIMEOUT = 'WEBHOOK_TIMEOUT',
-    RATE_LIMIT_ERROR = 'RATE_LIMIT_ERROR',
-    GIT_CONFLICT = 'GIT_CONFLICT',
-    HEALTH_CHECK_FAILED = 'HEALTH_CHECK_FAILED'
-}
 
 
 export interface PipelineTrigger {

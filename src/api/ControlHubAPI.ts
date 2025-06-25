@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import * as vscode from 'vscode';
-import { Pipeline, PipelineEvent, PipelineStage, PipelineMetrics } from '../models/Pipeline';
+import { Pipeline, PipelineStage, PipelineMetrics } from '../models/Pipeline';
 
 export class ControlHubAPI {
     private client: AxiosInstance;
@@ -84,29 +84,29 @@ export class ControlHubAPI {
             return pipelines.map((p: any) => ({
                 id: p.id,
                 appName: p.appName,
-                startTime: p.startedAt || p.startTime,
-                endTime: p.completedAt || p.endTime,
-                status: p.status?.toLowerCase() || 'pending',
-                stages: (p.stages || []).map((s: any) => ({
+                startTime: p.startedAt,
+                endTime: p.completedAt,
+                status: p.status,
+                stages: p.stages ? p.stages.map((s: any) => ({
                     id: s.id,
                     stageName: s.stageName,
                     component: s.component,
-                    status: s.status?.toLowerCase() || 'pending',
-                    startedAt: s.startedAt || 0,
+                    status: s.status,
+                    startedAt: s.startedAt,
                     completedAt: s.completedAt,
                     errorMessage: s.errorMessage,
-                    details: s.details || {},
+                    details: s.details,
                     duration: s.duration
-                })),
-                events: p.events || [],
+                })) : [],
                 trigger: {
-                    type: p.triggerType || 'manual',
+                    type: p.triggerType,
                     user: p.triggerUser,
                     branch: p.branch,
                     commit: p.commitSha,
                     message: p.commitMessage
                 },
-                duration: p.duration
+                duration: p.duration,
+                stageCount: p.stageCount
             }));
         } catch (error: any) {
             if (error.response?.status === 401) {
@@ -128,35 +128,29 @@ export class ControlHubAPI {
             return {
                 id: p.id,
                 appName: p.appName,
-                startTime: p.startedAt || p.startTime,
-                endTime: p.completedAt || p.endTime,
-                status: p.status?.toLowerCase() || 'pending',
-                stages: (p.stages || []).map((s: any) => ({
+                startTime: p.startedAt,
+                endTime: p.completedAt,
+                status: p.status,
+                stages: p.stages.map((s: any) => ({
                     id: s.id,
                     stageName: s.stageName,
                     component: s.component,
-                    status: s.status?.toLowerCase() || 'pending',
-                    startedAt: s.startedAt || 0,
+                    status: s.status,
+                    startedAt: s.startedAt,
                     completedAt: s.completedAt,
                     errorMessage: s.errorMessage,
-                    details: s.details || {},
+                    details: s.details,
                     duration: s.duration
                 })),
-                events: (p.events || []).map((e: any) => ({
-                    id: e.id,
-                    timestamp: e.timestamp || 0,
-                    eventType: e.eventType,
-                    stageId: e.stageId,
-                    details: e.details || {}
-                })),
                 trigger: {
-                    type: p.triggerType || 'manual',
+                    type: p.triggerType,
                     user: p.triggerUser,
                     branch: p.branch,
                     commit: p.commitSha,
                     message: p.commitMessage
                 },
-                duration: p.duration
+                duration: p.duration,
+                stageCount: p.stageCount
             };
         } catch (error) {
             if (axios.isAxiosError(error)) {
@@ -173,26 +167,6 @@ export class ControlHubAPI {
         }
     }
 
-    async getPipelineEvents(pipelineId: string, eventType?: string): Promise<PipelineEvent[]> {
-        try {
-            const response = await this.client.get(`/pipelines/${pipelineId}/events`, {
-                params: { event_type: eventType }
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Failed to get pipeline events:', error);
-            throw error;
-        }
-    }
-
-    async createEvent(event: PipelineEvent): Promise<void> {
-        try {
-            await this.client.post('/events', event);
-        } catch (error) {
-            console.error('Failed to create event:', error);
-            throw error;
-        }
-    }
 
     async getMetrics(appName: string, period: string = '7d'): Promise<PipelineMetrics> {
         try {
@@ -216,7 +190,7 @@ export class ControlHubAPI {
         }
     }
 
-    connectWebSocket(pipelineId: string, onMessage: (event: PipelineEvent) => void): WebSocket {
+    connectWebSocket(pipelineId: string, onMessage: (data: any) => void): WebSocket {
         const wsUrl = this.baseURL.replace(/^https?/, 'ws') + `/api/v1/cicd/ws/pipelines/${pipelineId}`;
         const ws = new WebSocket(wsUrl);
 

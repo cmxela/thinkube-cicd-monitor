@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Pipeline, PipelineEvent, EventType } from '../models/Pipeline';
+import { Pipeline, StageStatus } from '../models/Pipeline';
 
 export class PipelineTimelinePanel {
     public static currentPanel: PipelineTimelinePanel | undefined;
@@ -241,11 +241,11 @@ export class PipelineTimelinePanel {
             
             // Determine status for styling
             let status = '';
-            if (stage.status === 'succeeded') {
+            if (stage.status === StageStatus.SUCCEEDED) {
                 status = 'done, ';
-            } else if (stage.status === 'failed') {
+            } else if (stage.status === StageStatus.FAILED) {
                 status = 'crit, ';
-            } else if (stage.status === 'running') {
+            } else if (stage.status === StageStatus.RUNNING) {
                 status = 'active, ';
             }
             

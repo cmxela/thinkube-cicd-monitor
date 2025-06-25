@@ -44,12 +44,6 @@
           "name": "Pipelines",
           "icon": "media/pipeline-icon.svg",
           "contextualTitle": "CI/CD Pipelines"
-        },
-        {
-          "id": "thinkube-cicd.events",
-          "name": "Recent Events",
-          "icon": "media/events-icon.svg",
-          "contextualTitle": "Pipeline Events"
         }
       ]
     },

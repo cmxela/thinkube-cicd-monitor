@@ -8,6 +8,7 @@ export interface Pipeline {
     events: PipelineEvent[];
     trigger: PipelineTrigger;
     duration?: number;
+    stageCount?: number;
 }
 
 export enum PipelineStatus {

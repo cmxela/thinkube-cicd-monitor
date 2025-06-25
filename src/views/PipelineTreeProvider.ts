@@ -4,7 +4,7 @@ import { EventEmitter } from 'events';
 import { Pipeline, PipelineStatus, PipelineStage, StageStatus, EventType } from '../models/Pipeline';
 import { ControlHubAPI } from '../api/ControlHubAPI';
 
-type TreeNode = PipelineItem | StageItem;
+type TreeNode = PipelineItem | StageItem | LoadingItem;
 
 export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDataProvider<TreeNode> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeNode | undefined | null | void> = new vscode.EventEmitter<TreeNode | undefined | null | void>();
@@ -13,6 +13,8 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
     private pipelines: Pipeline[] = [];
     private visible = false;
     private expandedPipelines = new Set<string>();
+    private loading = true;
+    private pipelineCache = new Map<string, Pipeline>();
 
     constructor(private controlHubAPI: ControlHubAPI) {
         super();
@@ -44,30 +46,78 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
 
     getChildren(element?: TreeNode): Thenable<TreeNode[]> {
         if (!element) {
-            // Root level - show pipelines
+            // Root level - show loading or pipelines
+            if (this.loading) {
+                return Promise.resolve([new LoadingItem()]);
+            }
+            
+            // Show pipelines with proper collapsible state
             return Promise.resolve(
-                this.pipelines.map(pipeline => new PipelineItem(pipeline))
+                this.pipelines.map(pipeline => {
+                    // Check if pipeline has stages (using stageCount from list response)
+                    const hasStages = (pipeline.stageCount && pipeline.stageCount > 0) || 
+                                    (pipeline.stages && pipeline.stages.length > 0);
+                    return new PipelineItem(
+                        pipeline,
+                        hasStages ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None
+                    );
+                })
             );
         } else if (element instanceof PipelineItem) {
-            // Show pipeline stages
-            // Track that this pipeline is expanded
-            if (!this.expandedPipelines.has(element.pipeline.id)) {
-                this.expandedPipelines.add(element.pipeline.id);
-                this.emit('pipelineExpanded', element.pipeline.id);
-            }
-            return Promise.resolve(this.getStages(element.pipeline));
+            // Lazy load full pipeline details if not cached
+            return this.loadPipelineStages(element);
         } else {
-            // StageItem has no children
+            // StageItem or LoadingItem has no children
             return Promise.resolve([]);
         }
     }
 
+    private async loadPipelineStages(element: PipelineItem): Promise<TreeNode[]> {
+        const pipelineId = element.pipeline.id;
+        
+        // Track that this pipeline is expanded
+        if (!this.expandedPipelines.has(pipelineId)) {
+            this.expandedPipelines.add(pipelineId);
+            this.emit('pipelineExpanded', pipelineId);
+        }
+        
+        // Check cache first
+        let fullPipeline = this.pipelineCache.get(pipelineId);
+        
+        // If not cached or doesn't have stages, fetch from API
+        if (!fullPipeline || !fullPipeline.stages) {
+            try {
+                const pipelineDetails = await this.controlHubAPI.getPipeline(pipelineId);
+                if (pipelineDetails) {
+                    fullPipeline = pipelineDetails;
+                    this.pipelineCache.set(pipelineId, fullPipeline);
+                }
+            } catch (error) {
+                console.error('Failed to load pipeline details:', error);
+                return [];
+            }
+        }
+        
+        // Return stages if available
+        if (fullPipeline && fullPipeline.stages) {
+            return this.getStages(fullPipeline);
+        }
+        
+        return [];
+    }
+
     private async loadPipelines() {
+        this.loading = true;
+        this._onDidChangeTreeData.fire();
+        
         try {
             this.pipelines = await this.controlHubAPI.listPipelines(undefined, undefined, 20);
         } catch (error) {
             console.error('Failed to load pipelines:', error);
             this.pipelines = [];
+        } finally {
+            this.loading = false;
+            this._onDidChangeTreeData.fire();
         }
     }
 
@@ -122,7 +172,7 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
 export class PipelineItem extends vscode.TreeItem {
     constructor(
         public readonly pipeline: Pipeline,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.Collapsed
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState
     ) {
         super(pipeline.appName, collapsibleState);
         
@@ -204,5 +254,13 @@ class StageItem extends vscode.TreeItem {
         } else {
             return new vscode.ThemeIcon('circle-outline');
         }
+    }
+}
+
+class LoadingItem extends vscode.TreeItem {
+    constructor() {
+        super('Loading pipelines...', vscode.TreeItemCollapsibleState.None);
+        this.iconPath = new vscode.ThemeIcon('sync~spin');
+        this.contextValue = 'loading';
     }
 }

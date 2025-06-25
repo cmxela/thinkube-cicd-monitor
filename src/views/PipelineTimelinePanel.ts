@@ -60,8 +60,8 @@ export class PipelineTimelinePanel {
             vscode.Uri.joinPath(this._extensionUri, 'media', 'timeline.css')
         );
 
-        // Calculate timeline data
-        const timelineData = this._calculateTimelineData(pipeline);
+        // Generate Mermaid diagram
+        const mermaidDiagram = this._generateMermaidDiagram(pipeline);
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -69,6 +69,22 @@ export class PipelineTimelinePanel {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pipeline Timeline</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                darkMode: true,
+                background: '#1e1e1e',
+                mainBkg: '#2d2d2d',
+                secondBkg: '#3d3d3d',
+                lineColor: '#5a5a5a',
+                primaryTextColor: '#cccccc',
+                fontFamily: 'var(--vscode-font-family)'
+            }
+        });
+    </script>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -108,51 +124,9 @@ export class PipelineTimelinePanel {
             color: var(--vscode-descriptionForeground);
             font-size: 14px;
         }
-        .timeline {
-            position: relative;
+        .mermaid {
             margin: 40px 0;
-        }
-        .timeline-bar {
-            height: 40px;
-            background-color: var(--vscode-editor-lineHighlightBackground);
-            border-radius: 4px;
-            position: relative;
-            overflow: hidden;
-        }
-        .timeline-segment {
-            position: absolute;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        .timeline-segment:hover {
-            filter: brightness(1.2);
-        }
-        .timeline-segment.success {
-            background-color: #4caf50;
-        }
-        .timeline-segment.failed {
-            background-color: #f44336;
-        }
-        .timeline-segment.warning {
-            background-color: #ff9800;
-        }
-        .timeline-segment.info {
-            background-color: #2196f3;
-        }
-        .timeline-segment.in-progress {
-            background-color: #9c27b0;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+            text-align: center;
         }
         .event-details {
             margin-top: 30px;
@@ -204,28 +178,19 @@ export class PipelineTimelinePanel {
         </div>
     </div>
 
-    <div class="timeline">
-        <div class="timeline-bar">
-            ${timelineData.segments.map(seg => `
-                <div class="timeline-segment ${seg.status}" 
-                     style="left: ${seg.left}%; width: ${seg.width}%;"
-                     title="${seg.label}: ${seg.duration}ms"
-                     onclick="scrollToEvent('${seg.stageId}')">
-                    ${seg.label}
-                </div>
-            `).join('')}
-        </div>
+    <div class="mermaid">
+        ${mermaidDiagram}
     </div>
 
     <div class="event-details">
         <h2>Stage Details</h2>
-        ${pipeline.stages.map((stage, index) => `
+        ${pipeline.stages.sort((a, b) => a.startedAt - b.startedAt).map((stage, index) => `
             <div class="event-item" id="event-${stage.id}" onclick="toggleDetails('${stage.id}')">
                 <div style="display: flex; justify-content: space-between;">
                     <strong>${stage.stageName}</strong>
                     <span class="event-time">${new Date(stage.startedAt * 1000).toLocaleTimeString()}</span>
                 </div>
-                <div>Component: ${stage.component} | Status: ${stage.status} | Duration: ${stage.duration ? Math.round(stage.duration) + 's' : 'Running'}</div>
+                <div>Component: ${stage.component} | Status: ${stage.status} | Duration: ${stage.duration !== null && stage.duration !== undefined ? Math.round(stage.duration) + 's' : 'Running'}</div>
                 ${stage.errorMessage ? `<div style="color: var(--vscode-errorForeground);">Error: ${stage.errorMessage}</div>` : ''}
                 <div class="event-details-panel" id="details-${stage.id}">
                     <pre>${JSON.stringify(stage.details || {}, null, 2)}</pre>
@@ -255,34 +220,66 @@ export class PipelineTimelinePanel {
 </html>`;
     }
 
-    private _calculateTimelineData(pipeline: Pipeline) {
+    private _generateMermaidDiagram(pipeline: Pipeline) {
         if (pipeline.stages.length === 0) {
-            return { segments: [] };
+            return 'graph LR\n    A[No stages]';
         }
 
-        const startTime = pipeline.startTime * 1000;
-        const endTime = pipeline.endTime ? pipeline.endTime * 1000 : Date.now();
-        const totalDuration = endTime - startTime;
-
-        const segments: any[] = [];
-
-        // Create segments from stages
-        pipeline.stages.forEach(stage => {
-            const stageStart = stage.startedAt * 1000;
-            const stageEnd = stage.completedAt ? stage.completedAt * 1000 : Date.now();
-            const left = ((stageStart - startTime) / totalDuration) * 100;
-            const width = ((stageEnd - stageStart) / totalDuration) * 100 || 1;
-            
-            segments.push({
-                label: stage.stageName,
-                left: Math.max(0, left),
-                width: Math.max(1, width),
-                duration: stageEnd - stageStart,
-                status: stage.status,
-                stageId: stage.id
-            });
+        // Sort stages by start time
+        const sortedStages = [...pipeline.stages].sort((a, b) => a.startedAt - b.startedAt);
+        
+        // Group stages by their start time to identify parallel stages
+        const stageGroups: Map<number, typeof sortedStages> = new Map();
+        sortedStages.forEach(stage => {
+            const startTime = stage.startedAt;
+            if (!stageGroups.has(startTime)) {
+                stageGroups.set(startTime, []);
+            }
+            stageGroups.get(startTime)!.push(stage);
         });
 
-        return { segments };
+        // Build the graph
+        let graph = 'graph LR\n';
+        let prevGroupIds: string[] = [];
+        
+        Array.from(stageGroups.entries()).forEach(([startTime, stages], groupIndex) => {
+            const currentGroupIds: string[] = [];
+            
+            stages.forEach((stage, stageIndex) => {
+                const stageId = stage.id.substring(0, 8); // Use first 8 chars of UUID
+                const duration = stage.duration !== null && stage.duration !== undefined 
+                    ? `${Math.round(stage.duration)}s` 
+                    : 'Running';
+                const statusIcon = stage.status === 'succeeded' ? '✓' : 
+                                 stage.status === 'failed' ? '✗' : 
+                                 stage.status === 'running' ? '⟳' : '○';
+                
+                graph += `    ${stageId}["${statusIcon} ${stage.stageName}<br/>${duration}"]\n`;
+                
+                // Style based on status
+                if (stage.status === 'succeeded') {
+                    graph += `    style ${stageId} fill:#4caf50,stroke:#2e7d32,color:#fff\n`;
+                } else if (stage.status === 'failed') {
+                    graph += `    style ${stageId} fill:#f44336,stroke:#c62828,color:#fff\n`;
+                } else if (stage.status === 'running') {
+                    graph += `    style ${stageId} fill:#2196f3,stroke:#1565c0,color:#fff\n`;
+                } else {
+                    graph += `    style ${stageId} fill:#9e9e9e,stroke:#616161,color:#fff\n`;
+                }
+                
+                currentGroupIds.push(stageId);
+                
+                // Connect from previous stages
+                if (prevGroupIds.length > 0) {
+                    prevGroupIds.forEach(prevId => {
+                        graph += `    ${prevId} --> ${stageId}\n`;
+                    });
+                }
+            });
+            
+            prevGroupIds = currentGroupIds;
+        });
+        
+        return graph;
     }
 }

@@ -169,9 +169,19 @@ export class PipelineItem extends vscode.TreeItem {
             ? `${Math.round(this.pipeline.duration / 1000)}s` 
             : 'Running';
         
-        const time = new Date(this.pipeline.startTime * 1000).toLocaleTimeString();
+        // Show both date and time in local timezone
+        const date = new Date(this.pipeline.startTime * 1000);
+        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const timeStr = date.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+        });
         
-        return `${this.pipeline.status} - ${duration} - ${time}`;
+        // Status is already uppercase from API mapping
+        const status = this.pipeline.status;
+        
+        return `${status} - ${duration} - ${dateStr} ${timeStr}`;
     }
 
     private getTooltip(): string {
@@ -181,10 +191,23 @@ export class PipelineItem extends vscode.TreeItem {
         if (trigger.user) triggerInfo += ` by ${trigger.user}`;
         if (trigger.branch) triggerInfo += ` on ${trigger.branch}`;
         
+        // Show full date and time in tooltip with local timezone
+        const startDate = new Date(this.pipeline.startTime * 1000);
+        const dateOptions: Intl.DateTimeFormatOptions = {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+        
         return `${this.pipeline.appName}\n` +
             `Status: ${this.pipeline.status}\n` +
             `${triggerInfo}\n` +
-            `Started: ${new Date(this.pipeline.startTime * 1000).toLocaleString()}`;
+            `Started: ${startDate.toLocaleString('en-US', dateOptions)}`;
     }
 
     private getIcon(): vscode.ThemeIcon {

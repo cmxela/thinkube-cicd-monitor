@@ -129,8 +129,8 @@ export class PipelineTimelinePanel {
             position: relative;
         }
         .timeline-label {
-            width: 200px;
-            padding-right: 20px;
+            width: 140px;
+            padding-right: 15px;
             text-align: right;
             font-weight: 500;
             color: var(--vscode-foreground);
@@ -186,7 +186,7 @@ export class PipelineTimelinePanel {
         .timeline-time-axis {
             display: flex;
             margin-top: 8px;
-            padding-left: 220px;
+            padding-left: 155px;
             color: var(--vscode-descriptionForeground);
             font-size: 10px;
         }
@@ -320,8 +320,12 @@ export class PipelineTimelinePanel {
             
             const statusClass = stage.status === StageStatus.FAILED ? 'failed' : taskType;
             
-            // For very short tasks, use actual width but ensure text is visible
+            // For very short tasks, use actual width but ensure visibility
             const displayWidth = Math.max(width, 0.5); // At least 0.5% to be visible
+            
+            // Only show text in bars that are wide enough (> 3% of total width)
+            const showText = width > 3;
+            const durationText = duration < 1 ? '<1s' : Math.round(duration) + 's';
             
             timeline += `
                 <div class="timeline-row">
@@ -330,8 +334,8 @@ export class PipelineTimelinePanel {
                         <div class="timeline-bar ${statusClass}" 
                              style="left: ${startOffset}%; width: ${displayWidth}%;"
                              onclick="scrollToEvent('${stage.id}')"
-                             title="${stage.stageName}: ${Math.round(duration)}s">
-                            ${duration < 1 ? '<1s' : Math.round(duration) + 's'}
+                             title="${stage.stageName}: ${durationText}">
+                            ${showText ? durationText : ''}
                         </div>
                     </div>
                 </div>

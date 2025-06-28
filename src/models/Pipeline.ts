@@ -8,6 +8,7 @@ export interface Pipeline {
     trigger: PipelineTrigger;
     duration?: number;
     stageCount?: number;
+    mermaidGantt?: string;  // Backend-generated Mermaid Gantt chart
 }
 
 export enum PipelineStatus {

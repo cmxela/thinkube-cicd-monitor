@@ -150,7 +150,8 @@ export class ControlHubAPI {
                     message: p.commitMessage
                 },
                 duration: p.duration,
-                stageCount: p.stageCount
+                stageCount: p.stageCount,
+                mermaidGantt: p.mermaidGantt  // Include backend-generated Mermaid diagram
             };
         } catch (error) {
             if (axios.isAxiosError(error)) {

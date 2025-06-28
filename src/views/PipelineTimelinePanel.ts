@@ -60,8 +60,8 @@ export class PipelineTimelinePanel {
             vscode.Uri.joinPath(this._extensionUri, 'media', 'timeline.css')
         );
 
-        // Generate Mermaid diagram
-        const mermaidDiagram = this._generateMermaidDiagram(pipeline);
+        // Use Mermaid diagram from backend if available, otherwise generate locally
+        const mermaidDiagram = (pipeline as any).mermaidGantt || this._generateMermaidDiagram(pipeline);
 
         return `<!DOCTYPE html>
 <html lang="en">

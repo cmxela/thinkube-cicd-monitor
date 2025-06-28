@@ -76,14 +76,14 @@ export class PipelineTimelinePanel {
             startOnLoad: true,
             theme: vscodeTheme,
             gantt: {
-                leftPadding: 180,  // Increase space for section names
+                leftPadding: 250,  // Further increase space for section names
                 rightPadding: 150,
                 topPadding: 50,
                 barHeight: 20,
                 barGap: 4,
                 fontSize: 12,
                 sectionFontSize: 14,
-                gridLineStartPadding: 150,  // Move grid lines to the right
+                gridLineStartPadding: 220,  // Move grid lines further to the right
                 numberSectionStyles: 2,
                 // Override default colors for different task types
                 taskBkgColor: '#ff9933',  // Orange for default tasks

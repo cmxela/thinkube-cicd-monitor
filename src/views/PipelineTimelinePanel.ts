@@ -150,12 +150,17 @@ export class PipelineTimelinePanel {
             border-radius: 3px;
             display: flex;
             align-items: center;
-            padding: 0 8px;
+            justify-content: center;
+            padding: 0 4px;
             color: white;
             font-size: 11px;
             font-weight: 500;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             transition: transform 0.2s;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            min-width: 20px;
         }
         .timeline-bar:hover {
             transform: translateY(-2px);
@@ -315,9 +320,8 @@ export class PipelineTimelinePanel {
             
             const statusClass = stage.status === StageStatus.FAILED ? 'failed' : taskType;
             
-            // For very short tasks, ensure minimum visible width
-            const minWidth = 5; // Minimum 5% width for visibility
-            const displayWidth = Math.max(width, minWidth);
+            // For very short tasks, use actual width but ensure text is visible
+            const displayWidth = Math.max(width, 0.5); // At least 0.5% to be visible
             
             timeline += `
                 <div class="timeline-row">

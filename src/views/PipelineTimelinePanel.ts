@@ -84,7 +84,10 @@ export class PipelineTimelinePanel {
                 fontSize: 12,
                 sectionFontSize: 14,
                 gridLineStartPadding: 150,  // Move grid lines to the right
-                numberSectionStyles: 2
+                numberSectionStyles: 2,
+                // Override default colors for different task types
+                taskBkgColor: '#ff9933',  // Orange for default tasks
+                taskBorderColor: '#ff7700'
             },
             themeVariables: {
                 darkMode: vscodeTheme === 'dark',
@@ -105,8 +108,13 @@ export class PipelineTimelinePanel {
                 sectionBkgColor2: vscodeTheme === 'dark' ? '#4EC9B0' : '#ddd',
                 altSectionBkgColor: vscodeTheme === 'dark' ? '#555' : '#f9f9f9',
                 gridColor: vscodeTheme === 'dark' ? '#444' : '#ddd',
-                doneTaskBkgColor: vscodeTheme === 'dark' ? '#4EC9B0' : '#28a745',
-                doneTaskBorderColor: vscodeTheme === 'dark' ? '#4EC9B0' : '#28a745',
+                // Task colors based on type
+                activeTaskBkgColor: '#5DADE2',  // Light blue for workflow tasks (active status)
+                activeTaskBorderColor: '#3498DB',
+                doneTaskBkgColor: '#82E0AA',  // Light green for deployment tasks (done status)
+                doneTaskBorderColor: '#58D68D',
+                taskBkgColor: '#F8C471',  // Light orange for other tasks (no status)
+                taskBorderColor: '#F39C12',
                 critBkgColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
                 critBorderColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
                 todayLineColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
@@ -170,6 +178,27 @@ export class PipelineTimelinePanel {
         .mermaid text.sectionTitle {
             text-anchor: start !important;
             font-weight: bold !important;
+        }
+        /* Custom task colors based on task ID patterns */
+        /* Workflow tasks (light blue) */
+        .mermaid rect[id*="workflow"] {
+            fill: #5DADE2 !important;
+            stroke: #3498DB !important;
+        }
+        /* Deployment tasks (light green) */
+        .mermaid rect[id*="deployment"] {
+            fill: #82E0AA !important;
+            stroke: #58D68D !important;
+        }
+        /* Other tasks (light orange) */
+        .mermaid rect[id*="other"] {
+            fill: #F8C471 !important;
+            stroke: #F39C12 !important;
+        }
+        /* Failed tasks (keep red) */
+        .mermaid rect.crit {
+            fill: #ff6b6b !important;
+            stroke: #ff4444 !important;
         }
         .event-details {
             margin-top: 30px;

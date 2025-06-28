@@ -126,9 +126,10 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
 
         // Use actual stages from the pipeline
         pipeline.stages.forEach(stage => {
-            const duration = stage.duration || 
+            // Duration is already in seconds from the API
+            const duration = stage.duration !== undefined ? stage.duration : 
                 (stage.completedAt && stage.startedAt ? 
-                    (stage.completedAt - stage.startedAt) * 1000 : 0);
+                    (stage.completedAt - stage.startedAt) : 0);
 
             stages.push(new StageItem(
                 stage.stageName, 
@@ -236,8 +237,9 @@ class StageItem extends vscode.TreeItem {
     ) {
         super(stage, vscode.TreeItemCollapsibleState.None);
         
-        this.description = `${Math.round(duration / 1000)}s`;
-        this.tooltip = `${stage}: ${status} (${Math.round(duration / 1000)}s)`;
+        // Duration is already in seconds
+        this.description = `${Math.round(duration)}s`;
+        this.tooltip = `${stage}: ${status} (${Math.round(duration)}s)`;
         this.iconPath = this.getIcon();
         this.contextValue = 'stage';
     }

@@ -119,13 +119,13 @@ export class PipelineTimelinePanel {
         .timeline-chart {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
             min-width: 800px;
         }
         .timeline-row {
             display: flex;
             align-items: center;
-            height: 40px;
+            height: 24px;
             position: relative;
         }
         .timeline-label {
@@ -135,25 +135,26 @@ export class PipelineTimelinePanel {
             font-weight: 500;
             color: var(--vscode-foreground);
             flex-shrink: 0;
+            font-size: 13px;
         }
         .timeline-bar-container {
             flex: 1;
             position: relative;
-            height: 30px;
+            height: 20px;
             background: var(--vscode-editor-lineHighlightBackground);
-            border-radius: 4px;
+            border-radius: 3px;
         }
         .timeline-bar {
             position: absolute;
             height: 100%;
-            border-radius: 4px;
+            border-radius: 3px;
             display: flex;
             align-items: center;
-            padding: 0 10px;
+            padding: 0 8px;
             color: white;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             transition: transform 0.2s;
         }
         .timeline-bar:hover {
@@ -179,10 +180,10 @@ export class PipelineTimelinePanel {
         }
         .timeline-time-axis {
             display: flex;
-            margin-top: 10px;
+            margin-top: 8px;
             padding-left: 220px;
             color: var(--vscode-descriptionForeground);
-            font-size: 11px;
+            font-size: 10px;
         }
         .timeline-time-marker {
             flex: 1;
@@ -307,21 +308,26 @@ export class PipelineTimelinePanel {
             let taskType = 'other';
             if (stageLower.includes('deploy') || stageLower.includes('argocd') || stageLower.includes('sync')) {
                 taskType = 'deployment';
-            } else if (stageLower.includes('workflow') || stageLower.includes('build') || stageLower.includes('test')) {
+            } else if (stageLower.includes('build') || stageLower.includes('test')) {
                 taskType = 'workflow';
             }
+            // workflow_triggered should be orange (other), not blue
             
             const statusClass = stage.status === StageStatus.FAILED ? 'failed' : taskType;
+            
+            // For very short tasks, ensure minimum visible width
+            const minWidth = 5; // Minimum 5% width for visibility
+            const displayWidth = Math.max(width, minWidth);
             
             timeline += `
                 <div class="timeline-row">
                     <div class="timeline-label">${stage.stageName.replace(/_/g, ' ')}</div>
                     <div class="timeline-bar-container">
                         <div class="timeline-bar ${statusClass}" 
-                             style="left: ${startOffset}%; width: ${Math.max(width, 2)}%;"
+                             style="left: ${startOffset}%; width: ${displayWidth}%;"
                              onclick="scrollToEvent('${stage.id}')"
                              title="${stage.stageName}: ${Math.round(duration)}s">
-                            ${Math.round(duration)}s
+                            ${duration < 1 ? '<1s' : Math.round(duration) + 's'}
                         </div>
                     </div>
                 </div>

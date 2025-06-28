@@ -230,7 +230,9 @@ export class PipelineTimelinePanel {
         
         // Build the Gantt chart using proper Mermaid syntax
         let gantt = 'gantt\n';
-        gantt += `    title ${pipeline.appName} Pipeline Execution\n`;
+        // Escape title to avoid syntax errors
+        const safeTitle = pipeline.appName.replace(/[:\[\]{}",]/g, '').trim();
+        gantt += `    title ${safeTitle} Pipeline Execution\n`;
         gantt += '    dateFormat X\n';  // Unix timestamp format
         gantt += '    axisFormat %H:%M:%S\n';
         
@@ -250,7 +252,14 @@ export class PipelineTimelinePanel {
             }
             
             // Create a safe task name and ID
-            const taskName = `${stage.stageName} (${stage.component})`;
+            // Escape special characters that can break Mermaid syntax
+            const taskName = `${stage.stageName} (${stage.component})`
+                .replace(/:/g, '-')
+                .replace(/,/g, '')
+                .replace(/[\[\]{}]/g, '')
+                .replace(/"/g, "'")
+                .replace(/\n/g, ' ')
+                .trim();
             const taskId = `task${index}`;
             
             // Format based on Mermaid documentation: taskName :status, taskId, startDate, endDate

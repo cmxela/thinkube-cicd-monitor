@@ -75,6 +75,17 @@ export class PipelineTimelinePanel {
         mermaid.initialize({ 
             startOnLoad: true,
             theme: vscodeTheme,
+            gantt: {
+                leftPadding: 180,  // Increase space for section names
+                rightPadding: 150,
+                topPadding: 50,
+                barHeight: 20,
+                barGap: 4,
+                fontSize: 12,
+                sectionFontSize: 14,
+                gridLineStartPadding: 150,  // Move grid lines to the right
+                numberSectionStyles: 2
+            },
             themeVariables: {
                 darkMode: vscodeTheme === 'dark',
                 background: vscodeTheme === 'dark' ? '#1e1e1e' : '#ffffff',
@@ -146,6 +157,19 @@ export class PipelineTimelinePanel {
         .mermaid {
             margin: 40px 0;
             text-align: center;
+            overflow-x: auto;
+        }
+        /* Adjust Gantt chart section spacing */
+        .mermaid .section {
+            text-anchor: start !important;
+            padding-right: 20px !important;
+        }
+        .mermaid .section0, .mermaid .section1, .mermaid .section2 {
+            fill: transparent !important;
+        }
+        .mermaid text.sectionTitle {
+            text-anchor: start !important;
+            font-weight: bold !important;
         }
         .event-details {
             margin-top: 30px;

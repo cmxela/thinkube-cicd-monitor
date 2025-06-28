@@ -71,17 +71,36 @@ export class PipelineTimelinePanel {
     <title>Pipeline Timeline</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <script>
+        const vscodeTheme = document.body.classList.contains('vscode-light') ? 'default' : 'dark';
         mermaid.initialize({ 
             startOnLoad: true,
-            theme: 'dark',
+            theme: vscodeTheme,
             themeVariables: {
-                darkMode: true,
-                background: '#1e1e1e',
-                mainBkg: '#2d2d2d',
-                secondBkg: '#3d3d3d',
-                lineColor: '#5a5a5a',
-                primaryTextColor: '#cccccc',
-                fontFamily: 'var(--vscode-font-family)'
+                darkMode: vscodeTheme === 'dark',
+                background: vscodeTheme === 'dark' ? '#1e1e1e' : '#ffffff',
+                primaryColor: vscodeTheme === 'dark' ? '#3794ff' : '#0066cc',
+                primaryTextColor: vscodeTheme === 'dark' ? '#cccccc' : '#333333',
+                primaryBorderColor: vscodeTheme === 'dark' ? '#3794ff' : '#0066cc',
+                lineColor: vscodeTheme === 'dark' ? '#5a5a5a' : '#333333',
+                secondaryColor: vscodeTheme === 'dark' ? '#4EC9B0' : '#007acc',
+                tertiaryColor: vscodeTheme === 'dark' ? '#374151' : '#f3f4f6',
+                mainBkg: vscodeTheme === 'dark' ? '#1e1e1e' : '#ffffff',
+                secondBkg: vscodeTheme === 'dark' ? '#2d2d2d' : '#f3f4f6',
+                tertiaryBkg: vscodeTheme === 'dark' ? '#374151' : '#e5e7eb',
+                taskTextLightColor: vscodeTheme === 'dark' ? '#ffffff' : '#000000',
+                taskTextDarkColor: vscodeTheme === 'dark' ? '#ffffff' : '#000000',
+                taskTextColor: vscodeTheme === 'dark' ? '#cccccc' : '#333333',
+                sectionBkgColor: vscodeTheme === 'dark' ? '#3794ff' : '#e5e7eb',
+                sectionBkgColor2: vscodeTheme === 'dark' ? '#4EC9B0' : '#ddd',
+                altSectionBkgColor: vscodeTheme === 'dark' ? '#555' : '#f9f9f9',
+                gridColor: vscodeTheme === 'dark' ? '#444' : '#ddd',
+                doneTaskBkgColor: vscodeTheme === 'dark' ? '#4EC9B0' : '#28a745',
+                doneTaskBorderColor: vscodeTheme === 'dark' ? '#4EC9B0' : '#28a745',
+                critBkgColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
+                critBorderColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
+                todayLineColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
+                fontFamily: 'var(--vscode-font-family)',
+                fontSize: '14px'
             }
         });
     </script>

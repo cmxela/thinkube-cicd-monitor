@@ -60,8 +60,8 @@ export class PipelineTimelinePanel {
             vscode.Uri.joinPath(this._extensionUri, 'media', 'timeline.css')
         );
 
-        // Use Mermaid diagram from backend if available, otherwise generate locally
-        const mermaidDiagram = (pipeline as any).mermaidGantt || this._generateMermaidDiagram(pipeline);
+        // Generate custom timeline
+        const customTimeline = this._generateCustomTimeline(pipeline);
 
         return `<!DOCTYPE html>
 <html lang="en">
@@ -69,60 +69,6 @@ export class PipelineTimelinePanel {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pipeline Timeline</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-    <script>
-        const vscodeTheme = document.body.classList.contains('vscode-light') ? 'default' : 'dark';
-        mermaid.initialize({ 
-            startOnLoad: true,
-            theme: vscodeTheme,
-            gantt: {
-                leftPadding: 250,  // Further increase space for section names
-                rightPadding: 150,
-                topPadding: 50,
-                barHeight: 20,
-                barGap: 4,
-                fontSize: 12,
-                sectionFontSize: 14,
-                gridLineStartPadding: 220,  // Move grid lines further to the right
-                numberSectionStyles: 2,
-                // Override default colors for different task types
-                taskBkgColor: '#ff9933',  // Orange for default tasks
-                taskBorderColor: '#ff7700'
-            },
-            themeVariables: {
-                darkMode: vscodeTheme === 'dark',
-                background: vscodeTheme === 'dark' ? '#1e1e1e' : '#ffffff',
-                primaryColor: vscodeTheme === 'dark' ? '#3794ff' : '#0066cc',
-                primaryTextColor: vscodeTheme === 'dark' ? '#cccccc' : '#333333',
-                primaryBorderColor: vscodeTheme === 'dark' ? '#3794ff' : '#0066cc',
-                lineColor: vscodeTheme === 'dark' ? '#5a5a5a' : '#333333',
-                secondaryColor: vscodeTheme === 'dark' ? '#4EC9B0' : '#007acc',
-                tertiaryColor: vscodeTheme === 'dark' ? '#374151' : '#f3f4f6',
-                mainBkg: vscodeTheme === 'dark' ? '#1e1e1e' : '#ffffff',
-                secondBkg: vscodeTheme === 'dark' ? '#2d2d2d' : '#f3f4f6',
-                tertiaryBkg: vscodeTheme === 'dark' ? '#374151' : '#e5e7eb',
-                taskTextLightColor: vscodeTheme === 'dark' ? '#ffffff' : '#000000',
-                taskTextDarkColor: vscodeTheme === 'dark' ? '#ffffff' : '#000000',
-                taskTextColor: vscodeTheme === 'dark' ? '#cccccc' : '#333333',
-                sectionBkgColor: vscodeTheme === 'dark' ? '#3794ff' : '#e5e7eb',
-                sectionBkgColor2: vscodeTheme === 'dark' ? '#4EC9B0' : '#ddd',
-                altSectionBkgColor: vscodeTheme === 'dark' ? '#555' : '#f9f9f9',
-                gridColor: vscodeTheme === 'dark' ? '#444' : '#ddd',
-                // Task colors based on type
-                activeTaskBkgColor: '#5DADE2',  // Light blue for workflow tasks (active status)
-                activeTaskBorderColor: '#3498DB',
-                doneTaskBkgColor: '#82E0AA',  // Light green for deployment tasks (done status)
-                doneTaskBorderColor: '#58D68D',
-                taskBkgColor: '#F8C471',  // Light orange for other tasks (no status)
-                taskBorderColor: '#F39C12',
-                critBkgColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
-                critBorderColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
-                todayLineColor: vscodeTheme === 'dark' ? '#ff6b6b' : '#dc3545',
-                fontFamily: 'var(--vscode-font-family)',
-                fontSize: '14px'
-            }
-        });
-    </script>
     <style>
         body {
             font-family: var(--vscode-font-family);
@@ -162,43 +108,85 @@ export class PipelineTimelinePanel {
             color: var(--vscode-descriptionForeground);
             font-size: 14px;
         }
-        .mermaid {
+        .timeline-container {
             margin: 40px 0;
-            text-align: center;
+            padding: 20px;
+            background-color: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-widget-border);
+            border-radius: 8px;
             overflow-x: auto;
         }
-        /* Adjust Gantt chart section spacing */
-        .mermaid .section {
-            text-anchor: start !important;
-            padding-right: 20px !important;
+        .timeline-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 800px;
         }
-        .mermaid .section0, .mermaid .section1, .mermaid .section2 {
-            fill: transparent !important;
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            position: relative;
         }
-        .mermaid text.sectionTitle {
-            text-anchor: start !important;
-            font-weight: bold !important;
+        .timeline-label {
+            width: 200px;
+            padding-right: 20px;
+            text-align: right;
+            font-weight: 500;
+            color: var(--vscode-foreground);
+            flex-shrink: 0;
         }
-        /* Custom task colors based on task ID patterns */
-        /* Workflow tasks (light blue) */
-        .mermaid rect[id*="workflow"] {
-            fill: #5DADE2 !important;
-            stroke: #3498DB !important;
+        .timeline-bar-container {
+            flex: 1;
+            position: relative;
+            height: 30px;
+            background: var(--vscode-editor-lineHighlightBackground);
+            border-radius: 4px;
         }
-        /* Deployment tasks (light green) */
-        .mermaid rect[id*="deployment"] {
-            fill: #82E0AA !important;
-            stroke: #58D68D !important;
+        .timeline-bar {
+            position: absolute;
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
         }
-        /* Other tasks (light orange) */
-        .mermaid rect[id*="other"] {
-            fill: #F8C471 !important;
-            stroke: #F39C12 !important;
+        .timeline-bar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
         }
-        /* Failed tasks (keep red) */
-        .mermaid rect.crit {
-            fill: #ff6b6b !important;
-            stroke: #ff4444 !important;
+        .timeline-bar.workflow {
+            background: #5DADE2;
+            border: 1px solid #3498DB;
+        }
+        .timeline-bar.deployment {
+            background: #82E0AA;
+            border: 1px solid #58D68D;
+        }
+        .timeline-bar.other {
+            background: #F8C471;
+            border: 1px solid #F39C12;
+        }
+        .timeline-bar.failed {
+            background: #ff6b6b;
+            border: 1px solid #ff4444;
+        }
+        .timeline-time-axis {
+            display: flex;
+            margin-top: 10px;
+            padding-left: 220px;
+            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
+        }
+        .timeline-time-marker {
+            flex: 1;
+            text-align: left;
         }
         .event-details {
             margin-top: 30px;
@@ -250,8 +238,8 @@ export class PipelineTimelinePanel {
         </div>
     </div>
 
-    <div class="mermaid">
-        ${mermaidDiagram}
+    <div class="timeline-container">
+        ${customTimeline}
     </div>
 
     <div class="event-details">
@@ -292,52 +280,65 @@ export class PipelineTimelinePanel {
 </html>`;
     }
 
-    private _generateMermaidDiagram(pipeline: Pipeline) {
+    private _generateCustomTimeline(pipeline: Pipeline) {
         if (pipeline.stages.length === 0) {
-            return 'gantt\n    title No stages\n    dateFormat X\n    axisFormat %s';
+            return '<div style="text-align: center; color: var(--vscode-descriptionForeground);">No stages to display</div>';
         }
 
         // Sort stages by start time
         const sortedStages = [...pipeline.stages].sort((a, b) => a.startedAt - b.startedAt);
         
-        // Build the Gantt chart using proper Mermaid syntax
-        let gantt = 'gantt\n';
-        // Escape title to avoid syntax errors
-        const safeTitle = pipeline.appName.replace(/[:\[\]{}",]/g, '').trim();
-        gantt += `    title ${safeTitle} Pipeline Execution\n`;
-        gantt += '    dateFormat X\n';  // Unix timestamp format
-        gantt += '    axisFormat %H:%M:%S\n';
+        // Calculate total duration and find min/max times
+        const minTime = sortedStages[0].startedAt;
+        const maxTime = Math.max(...sortedStages.map(s => s.completedAt || Math.floor(Date.now() / 1000)));
+        const totalDuration = maxTime - minTime;
         
-        // Add each stage without sections (sections seem to cause issues)
-        sortedStages.forEach((stage, index) => {
-            const startTime = stage.startedAt;
+        // Generate timeline bars
+        let timeline = '<div class="timeline-chart">';
+        
+        sortedStages.forEach((stage) => {
+            const startOffset = ((stage.startedAt - minTime) / totalDuration) * 100;
             const endTime = stage.completedAt || Math.floor(Date.now() / 1000);
+            const duration = endTime - stage.startedAt;
+            const width = (duration / totalDuration) * 100;
             
-            // Determine status for styling
-            let status = '';
-            if (stage.status === StageStatus.SUCCEEDED) {
-                status = 'done, ';
-            } else if (stage.status === StageStatus.FAILED) {
-                status = 'crit, ';
-            } else if (stage.status === StageStatus.RUNNING) {
-                status = 'active, ';
+            // Determine task type and status
+            const stageLower = stage.stageName.toLowerCase();
+            let taskType = 'other';
+            if (stageLower.includes('deploy') || stageLower.includes('argocd') || stageLower.includes('sync')) {
+                taskType = 'deployment';
+            } else if (stageLower.includes('workflow') || stageLower.includes('build') || stageLower.includes('test')) {
+                taskType = 'workflow';
             }
             
-            // Create a safe task name and ID
-            // Escape special characters that can break Mermaid syntax
-            const taskName = `${stage.stageName} (${stage.component})`
-                .replace(/:/g, '-')
-                .replace(/,/g, '')
-                .replace(/[\[\]{}]/g, '')
-                .replace(/"/g, "'")
-                .replace(/\n/g, ' ')
-                .trim();
-            const taskId = `task${index}`;
+            const statusClass = stage.status === StageStatus.FAILED ? 'failed' : taskType;
             
-            // Format based on Mermaid documentation: taskName :status, taskId, startDate, endDate
-            gantt += `    ${taskName} :${status}${taskId}, ${startTime}, ${endTime}\n`;
+            timeline += `
+                <div class="timeline-row">
+                    <div class="timeline-label">${stage.stageName.replace(/_/g, ' ')}</div>
+                    <div class="timeline-bar-container">
+                        <div class="timeline-bar ${statusClass}" 
+                             style="left: ${startOffset}%; width: ${Math.max(width, 2)}%;"
+                             onclick="scrollToEvent('${stage.id}')"
+                             title="${stage.stageName}: ${Math.round(duration)}s">
+                            ${Math.round(duration)}s
+                        </div>
+                    </div>
+                </div>
+            `;
         });
         
-        return gantt;
+        // Add time axis
+        timeline += `
+            <div class="timeline-time-axis">
+                <div class="timeline-time-marker">0s</div>
+                <div class="timeline-time-marker" style="text-align: center">${Math.round(totalDuration / 2)}s</div>
+                <div class="timeline-time-marker" style="text-align: right">${Math.round(totalDuration)}s</div>
+            </div>
+        `;
+        
+        timeline += '</div>';
+        
+        return timeline;
     }
 }

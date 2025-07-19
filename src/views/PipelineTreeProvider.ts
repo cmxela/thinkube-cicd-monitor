@@ -238,13 +238,18 @@ class StageItem extends vscode.TreeItem {
         super(stage, vscode.TreeItemCollapsibleState.None);
         
         // Duration is already in seconds
-        this.description = `${Math.round(duration)}s`;
-        this.tooltip = `${stage}: ${status} (${Math.round(duration)}s)`;
+        this.description = status === StageStatus.RUNNING ? 'Running' : `${Math.round(duration)}s`;
+        this.tooltip = `${stage}: ${status}${status === StageStatus.RUNNING ? '' : ` (${Math.round(duration)}s)`}`;
         this.iconPath = this.getIcon();
         this.contextValue = 'stage';
     }
 
     private getIcon(): vscode.ThemeIcon {
+        // Debug logging
+        if (this.stage === 'frontend_build') {
+            console.log(`frontend_build status: "${this.status}" (type: ${typeof this.status})`);
+        }
+        
         if (this.status === StageStatus.SUCCEEDED) {
             return new vscode.ThemeIcon('check', new vscode.ThemeColor('testing.iconPassed'));
         } else if (this.status === StageStatus.FAILED) {

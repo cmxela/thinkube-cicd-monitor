@@ -28,6 +28,8 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
     }
 
     refresh(): void {
+        // Clear cache to ensure fresh data
+        this.pipelineCache.clear();
         this.loadPipelines();
         this._onDidChangeTreeData.fire();
     }
@@ -84,8 +86,13 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
         // Check cache first
         let fullPipeline = this.pipelineCache.get(pipelineId);
         
-        // If not cached or doesn't have stages, fetch from API
-        if (!fullPipeline || !fullPipeline.stages) {
+        // Force refresh if pipeline is RUNNING or if cache is stale
+        const shouldRefresh = !fullPipeline || 
+                            !fullPipeline.stages || 
+                            fullPipeline.status === PipelineStatus.RUNNING ||
+                            element.pipeline.status === PipelineStatus.RUNNING;
+        
+        if (shouldRefresh) {
             try {
                 const pipelineDetails = await this.controlHubAPI.getPipeline(pipelineId);
                 if (pipelineDetails) {
@@ -130,6 +137,18 @@ export class PipelineTreeProvider extends EventEmitter implements vscode.TreeDat
             const duration = stage.duration !== undefined ? stage.duration : 
                 (stage.completedAt && stage.startedAt ? 
                     (stage.completedAt - stage.startedAt) : 0);
+
+            // Debug logging for frontend_build
+            if (stage.stageName === 'frontend_build') {
+                console.log('frontend_build stage data:', {
+                    stageName: stage.stageName,
+                    status: stage.status,
+                    duration: stage.duration,
+                    calculatedDuration: duration,
+                    startedAt: stage.startedAt,
+                    completedAt: stage.completedAt
+                });
+            }
 
             stages.push(new StageItem(
                 stage.stageName, 

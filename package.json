@@ -33,7 +33,7 @@
         {
           "id": "thinkube-cicd",
           "title": "Thinkube CI/CD",
-          "icon": "media/pipeline-icon.svg"
+          "icon": "media/tk_devops.svg"
         }
       ]
     },
@@ -42,7 +42,7 @@
         {
           "id": "thinkube-cicd.pipelines",
           "name": "Pipelines",
-          "icon": "media/pipeline-icon.svg",
+          "icon": "media/tk_devops.svg",
           "contextualTitle": "CI/CD Pipelines"
         }
       ]

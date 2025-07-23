@@ -38,16 +38,13 @@ export class WebSocketManager extends EventEmitter {
             
             // Convert to WebSocket URL (use wss for https)
             const wsUrl = baseUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
-            const fullUrl = `${wsUrl}/api/v1/cicd/ws/pipelines/${pipelineId}`;
             
-            // Get auth token
-            const token = await this.getAuthToken();
+            // Server WebSocket is at /api/v1/ws/pipelines/{id} (not /api/v1/cicd/ws/pipelines/{id})
+            // Also, server currently has NO authentication on WebSocket
+            const fullUrl = `${wsUrl}/api/v1/ws/pipelines/${pipelineId}`;
             
-            // Create WebSocket with auth headers
+            // Create WebSocket (server doesn't check auth currently)
             const ws = new WebSocket(fullUrl, {
-                headers: token ? {
-                    'Authorization': `Bearer ${token}`
-                } : undefined,
                 rejectUnauthorized: false // For self-signed certificates
             });
 
@@ -123,60 +120,11 @@ export class WebSocketManager extends EventEmitter {
             
             // Convert to WebSocket URL (use wss for https)
             const wsUrl = baseUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
-            const fullUrl = `${wsUrl}/api/v1/cicd/ws/events`;
             
-            // Get auth token
-            const token = await this.getAuthToken();
-            
-            // Create WebSocket with auth headers
-            const ws = new WebSocket(fullUrl, {
-                headers: token ? {
-                    'Authorization': `Bearer ${token}`
-                } : undefined,
-                rejectUnauthorized: false // For self-signed certificates
-            });
-
-            ws.on('open', () => {
-                console.log('Global WebSocket connected for all pipeline events');
-                this.globalWebSocket = ws;
-                
-                // Clear any reconnect timer
-                if (this.globalReconnectTimer) {
-                    clearTimeout(this.globalReconnectTimer);
-                    this.globalReconnectTimer = null;
-                }
-            });
-
-            ws.on('message', (data) => {
-                try {
-                    const event = JSON.parse(data.toString());
-                    console.log('Received global pipeline event:', event);
-                    
-                    // Emit the event for the extension to handle
-                    this.emit('pipelineEvent', event);
-                } catch (error) {
-                    console.error('Failed to parse global WebSocket message:', error);
-                }
-            });
-
-            ws.on('error', (error) => {
-                console.error('Global WebSocket error:', error);
-            });
-
-            ws.on('close', (code, reason) => {
-                console.log(`Global WebSocket closed: ${code} - ${reason}`);
-                this.globalWebSocket = null;
-                
-                // Attempt to reconnect after a delay if still active
-                if (this.isActive && code !== 1000) { // 1000 = normal closure
-                    this.globalReconnectTimer = setTimeout(() => {
-                        if (this.isActive) {
-                            console.log('Attempting to reconnect to global event stream');
-                            this.connectToGlobalStream();
-                        }
-                    }, 5000); // Reconnect after 5 seconds
-                }
-            });
+            // Global events endpoint is not implemented in server
+            // For now, disable global WebSocket connection
+            console.log('Global WebSocket endpoint not implemented on server - skipping connection');
+            return;
 
         } catch (error) {
             console.error('Failed to connect global WebSocket:', error);

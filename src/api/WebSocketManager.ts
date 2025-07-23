@@ -39,9 +39,9 @@ export class WebSocketManager extends EventEmitter {
             // Convert to WebSocket URL (use wss for https)
             const wsUrl = baseUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
             
-            // Server WebSocket is at /api/v1/ws/pipelines/{id} (not /api/v1/cicd/ws/pipelines/{id})
+            // Server WebSocket is at /api/v1/cicd/ws/pipelines/{id} because the cicd router has /cicd prefix
             // Also, server currently has NO authentication on WebSocket
-            const fullUrl = `${wsUrl}/api/v1/ws/pipelines/${pipelineId}`;
+            const fullUrl = `${wsUrl}/api/v1/cicd/ws/pipelines/${pipelineId}`;
             
             // Create WebSocket (server doesn't check auth currently)
             const ws = new WebSocket(fullUrl, {

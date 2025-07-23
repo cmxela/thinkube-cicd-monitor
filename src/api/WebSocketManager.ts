@@ -36,8 +36,8 @@ export class WebSocketManager extends EventEmitter {
             const config = vscode.workspace.getConfiguration('thinkube-cicd');
             const baseUrl = config.get('apiUrl', 'https://control.thinkube.com');
             
-            // Convert to WebSocket URL
-            const wsUrl = baseUrl.replace(/^https?/, 'ws');
+            // Convert to WebSocket URL (use wss for https)
+            const wsUrl = baseUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
             const fullUrl = `${wsUrl}/api/v1/cicd/ws/pipelines/${pipelineId}`;
             
             // Get auth token
@@ -121,8 +121,8 @@ export class WebSocketManager extends EventEmitter {
             const config = vscode.workspace.getConfiguration('thinkube-cicd');
             const baseUrl = config.get('apiUrl', 'https://control.thinkube.com');
             
-            // Convert to WebSocket URL
-            const wsUrl = baseUrl.replace(/^https?/, 'ws');
+            // Convert to WebSocket URL (use wss for https)
+            const wsUrl = baseUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
             const fullUrl = `${wsUrl}/api/v1/cicd/ws/events`;
             
             // Get auth token
